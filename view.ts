@@ -3,6 +3,9 @@ import type { Doc } from './content.ts';
 
 const SECTIONS = ['made', 'notes', 'ideas', 'crew'];
 const OPEN = new Set(['ideas']); // drwxrwxrwx: open to everyone
+const ORDER = ['', 'now', ...SECTIONS, 'hello'];
+const META: Record<string, string> = { '': 'who I am', hello: 'say hi' };
+const rank = (path: string) => (ORDER.includes(path) ? ORDER.indexOf(path) : ORDER.length);
 
 function ago(d: Date) {
   const s = (Date.now() - +d) / 1000;
@@ -14,12 +17,11 @@ function ago(d: Date) {
 
 /** The ls pane: top-level files, then the folders that have something in them. */
 function listing(docs: Doc[]) {
-  const top = docs.filter((d) => !d.dir).sort((a, b) => (a.path === '' ? -1 : b.path === '' ? 1 : a.path.localeCompare(b.path)));
-  const dirs = SECTIONS.map((name) => ({ name, docs: docs.filter((d) => d.dir === name) })).filter((s) => s.docs.length);
-  return [
-    ...top.map((d) => ({ href: `/${d.path}`, perm: '-rw-r--r--', name: d.path ? `${d.path}.md` : 'README.md', meta: d.path ? `edited ${ago(d.modified)}` : 'who I am', dir: false })),
-    ...dirs.map((s) => ({ href: `/${s.name}`, perm: OPEN.has(s.name) ? 'drwxrwxrwx' : 'drwxr-xr-x', name: s.name, meta: `${s.docs.length} · ${ago(s.docs[0].modified)}`, dir: true })),
-  ];
+  const files = docs.filter((d) => !d.dir).map((d) => ({ path: d.path, href: `/${d.path}`, perm: '-rw-r--r--', name: `${d.path || 'README'}.md`, meta: META[d.path] ?? `edited ${ago(d.modified)}`, dir: false }));
+  const dirs = SECTIONS.map((name) => ({ name, docs: docs.filter((d) => d.dir === name) }))
+    .filter((s) => s.docs.length)
+    .map((s) => ({ path: s.name, href: `/${s.name}`, perm: OPEN.has(s.name) ? 'drwxrwxrwx' : 'drwxr-xr-x', name: s.name, meta: `${s.docs.length} · ${ago(s.docs[0].modified)}`, dir: true }));
+  return [...files, ...dirs].sort((a, b) => rank(a.path) - rank(b.path) || a.name.localeCompare(b.name));
 }
 
 // ---- plain text, for curl and agents ----
@@ -29,9 +31,14 @@ export function textLs(docs: Doc[], dir = '') {
   return docs.filter((d) => d.dir === dir).map((d) => `${(d.date ?? '').padEnd(12)}${d.path}.md  ${d.title}`).join('\n');
 }
 
+const SPECS: Record<string, string[]> = { made: ['qty', 'material', 'year', 'status'], ideas: ['status', 'date'] };
+
+/** The doc as markdown: a title if the body has none, and (for made/ideas) a one-row parts list. */
 export function textDoc(doc: Doc, markdown: string) {
   const head = /^#\s/.test(markdown.trimStart()) ? '' : `# ${doc.title}\n\n`;
-  return head + markdown.trim() + '\n';
+  const keys = (SPECS[doc.dir] ?? []).filter((k) => doc.data[k] != null && doc.data[k] !== '');
+  const specs = keys.length ? `| ${keys.join(' | ')} |\n|${' --- |'.repeat(keys.length)}\n| ${keys.map((k) => String(doc.data[k])).join(' | ')} |\n\n` : '';
+  return head + specs + markdown.trim() + '\n';
 }
 
 // ---- HTML ----
@@ -68,7 +75,7 @@ export function page({ docs, active, cmd, file, modified, body }: Page) {
 export function dirBody(docs: Doc[], dir: string) {
   return String(html`<h1>${dir}/</h1><ul class="list">${docs
     .filter((d) => d.dir === dir)
-    .map((d) => html`<li><a href="/${d.path}">${d.title}</a><span>${d.date ?? ago(d.modified)}</span></li>`)}</ul>`);
+    .map((d) => html`<li><a href="/${d.path}">${d.title}</a><span>${dir === 'made' ? `${d.data.year ?? ''} · ${d.data.material ?? ''}` : dir === 'ideas' ? String(d.data.status ?? 'open') : (d.date ?? ago(d.modified))}</span></li>`)}</ul>`);
 }
 
 const CSS = `
@@ -100,7 +107,12 @@ main { flex: 1; display: grid; grid-template-columns: 400px 1fr; }
 .preview code { font: 14px "JetBrains Mono", ui-monospace, monospace; background: var(--sel); padding: 1px 5px; }
 .preview pre { background: #111; color: #e8e6df; padding: 16px 18px; overflow-x: auto; margin-bottom: 14px; }
 .preview pre code { background: none; padding: 0; }
-.preview img { max-width: 100%; }
+.preview img { max-width: 100%; margin: 8px 0; filter: grayscale(1) contrast(1.1); }
+.preview table { border-collapse: collapse; margin-bottom: 18px; font: 12px/1.5 "JetBrains Mono", ui-monospace, monospace; }
+.preview th, .preview td { border: 1px solid var(--ink); padding: 6px 12px; text-align: left; vertical-align: top; }
+.preview th { font-weight: 500; color: var(--mute); text-transform: uppercase; letter-spacing: .06em; font-size: 10px; }
+.preview th:empty { display: none; }
+.preview thead:has(th:empty) { display: none; }
 .preview .list { list-style: none; padding: 0; }
 .preview .list li { padding: 8px 0; border-bottom: 1px dashed var(--line); display: grid; grid-template-columns: 1fr auto; gap: 12px; }
 .preview .list li a { text-decoration: none; }

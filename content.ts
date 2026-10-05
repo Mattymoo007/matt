@@ -41,7 +41,7 @@ async function readDoc(abs: string): Promise<Doc | undefined> {
       file,
       dir,
       title: String(data.title ?? heading ?? name),
-      date: (data.date ?? data.updated) ? String(data.date ?? data.updated) : undefined,
+      date: data.date ?? data.updated ?? data.year ? String(data.date ?? data.updated ?? data.year) : undefined,
       data,
       body,
       modified: (await stat(abs)).mtime,
