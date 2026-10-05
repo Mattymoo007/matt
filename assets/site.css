@@ -191,6 +191,26 @@ main {
 .row.focus {
   box-shadow: inset 2px 0 var(--accent);
 }
+.row.leaf .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row.leaf i {
+  font-style: normal;
+  color: var(--mute);
+  margin-right: 8px;
+}
+
+/* ---- paths: every folder on the way is a link ---- */
+.crumbs a {
+  color: inherit;
+  text-decoration: underline dotted var(--mute);
+  text-underline-offset: 3px;
+}
+.crumbs a:hover {
+  color: var(--accent);
+}
 
 /* ---- preview ---- */
 .preview {
@@ -306,6 +326,31 @@ main {
 }
 .term .src {
   color: #8a8a8a;
+}
+.sibs {
+  margin-top: 56px;
+}
+.sibs div {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  margin-top: 4px;
+}
+.sibs a {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sibs a:hover {
+  color: #7fa7dd;
+}
+.sibs div > :nth-child(2) {
+  color: #8a8a8a;
+}
+.sibs div > :last-child {
+  text-align: right;
 }
 .preview hr {
   border: 0;
@@ -553,8 +598,16 @@ dialog p {
   .bar .hint {
     display: none;
   }
-  .page-file .ls {
-    display: none;
+  .sibs div {
+    grid-template-columns: 1fr; /* one per line, like ls */
+    gap: 2px;
+  }
+  .sibs div > :last-child {
+    text-align: left;
+  }
+  .page-file .ls,
+  .row.leaf {
+    display: none; /* on a phone the folder's own page is the list */
   }
   .preview {
     padding: 24px 16px 40px;

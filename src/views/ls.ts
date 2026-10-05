@@ -10,6 +10,7 @@ const rank = (path: string) => (ORDER.includes(path) ? ORDER.indexOf(path) : ORD
 export type Row = { path: string; perm: string; name: string; meta: string; dir: boolean };
 
 export const fileName = (d: Doc) => `${d.path || 'README'}.md`;
+export const baseName = (d: Doc) => fileName(d).split('/').pop()!; // 'made/stickit.md' → 'stickit.md'
 
 export function ago(date: Date) {
   const s = (Date.now() - +date) / 1000;

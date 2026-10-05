@@ -1,7 +1,7 @@
 // The ~/matt shell around every page: prompt bar, file list, preview, status bar.
 import { html, raw } from 'hono/html';
 import type { Site } from '../content.ts';
-import { ago, listing, MACHINES, SECTIONS } from './ls.ts';
+import { ago, baseName, inDir, listing, MACHINES, SECTIONS } from './ls.ts';
 
 export const VERSION = Date.now().toString(36); // busts the asset cache on every deploy
 
@@ -38,10 +38,18 @@ const SPECULATION = JSON.stringify({
 /** JSON that's safe inside a <script>. */
 const json = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c');
 
+/** A path with every folder on the way as a link: ~/matt/made/stickit.md */
+function crumbs(path: string) {
+  const parts = path.split('/');
+  const last = parts.pop();
+  return html`<span class="crumbs"><a href="/">~/matt</a>${parts.map((d, i) => html`/<a href="/${parts.slice(0, i + 1).join('/')}">${d}</a>`)}${last ? `/${last}` : ''}</span>`;
+}
+
 export function layout(p: Page, site: Site, req: Req) {
   const newest = site.docs.reduce<Date | undefined>((n, d) => (!n || d.modified > n ? d.modified : n), undefined);
   const url = `${req.origin}/${p.path}`;
   const parent = p.path.includes('/') ? p.path.split('/')[0] : '';
+  const cwd = p.kind === 'dir' ? p.path : parent;
   const hasRaw = p.kind === 'file' || p.kind === 'home';
   const rawHref = p.path ? `/${p.path}.md` : '/README.md';
   // what the prompt can open and search: every doc and folder
@@ -49,7 +57,14 @@ export function layout(p: Page, site: Site, req: Req) {
     ...site.docs.map((d) => ({ p: d.path, t: d.title, d: d.dir })),
     ...SECTIONS.filter((s) => site.docs.some((d) => d.dir === s)).map((s) => ({ p: s, t: `${s}/`, d: s })),
   ];
-  const isActive = (path: string, dir: boolean) => path === p.path || (dir && p.path.startsWith(`${path}/`));
+  // the folder you're in unfolds, like `tree`
+  const tree = (dir: string) => {
+    const docs = inDir(site.docs, dir);
+    return docs.map(
+      (d, i) =>
+        html`<a class="row leaf${d.path === p.path ? ' active' : ''}" href="/${d.path}"><span class="perm"></span><span class="name"><i>${i === docs.length - 1 ? '└──' : '├──'}</i>${baseName(d)}</span><span class="meta">${d.date ?? ''}</span></a>`,
+    );
+  };
 
   return html`<!doctype html>
 <html lang="en">
@@ -76,7 +91,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
 </head>
 <body class="page-${p.kind}" data-path="${p.path}">
   <form class="bar" role="search" autocomplete="off">
-    <label for="prompt">matt@earth:<b>~/matt</b> $</label>
+    <label for="prompt">matt@earth:<b>${crumbs(cwd ? `${cwd}/` : '')}</b> $</label>
     <span class="field"><input id="prompt" name="q" placeholder=" " spellcheck="false" autocapitalize="off" aria-label="Type a command, or search"><span class="ghost" aria-hidden="true">${p.cmd}<span class="cursor"></span></span></span>
     <span class="hint">type a command · <b>?</b> help</span>
     <div class="out" hidden aria-live="polite"></div>
@@ -86,7 +101,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
       <div class="cmd">total ${site.docs.length}${newest ? ` · last write ${ago(newest)}` : ''}</div>
       ${listing(site.docs).map(
         (r) =>
-          html`<a class="row${r.dir ? ' dir' : ''}${isActive(r.path, r.dir) ? ' active' : ''}" href="/${r.path}"><span class="perm">${r.perm}</span><span class="name">${r.name}</span><span class="meta">${r.meta}</span></a>`,
+          html`<a class="row${r.dir ? ' dir' : ''}${r.path === p.path ? ' active' : ''}" href="/${r.path}"><span class="perm">${r.perm}</span><span class="name">${r.name}</span><span class="meta">${r.meta}</span></a>${r.dir && r.path === cwd ? tree(r.path) : ''}`,
       )}
       <div class="group">for machines</div>
       ${MACHINES.map(
@@ -96,7 +111,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
     </div></nav>
     <article class="preview">
       ${p.kind === 'home' ? '' : html`<a class="up" href="/${parent}">cd ..</a>`}
-      <div class="file"><span>~/matt/${p.file}</span><span class="grow"></span>${p.modified ? html`<span>modified ${p.modified.toISOString().slice(0, 10)}</span>` : ''}${hasRaw ? html`<a href="${rawHref}" title="This page as markdown">raw</a>` : ''}</div>
+      <div class="file">${crumbs(p.file)}<span class="grow"></span>${p.modified ? html`<span>modified ${p.modified.toISOString().slice(0, 10)}</span>` : ''}${hasRaw ? html`<a href="${rawHref}" title="This page as markdown">raw</a>` : ''}</div>
       ${raw(p.body)}
     </article>
   </main>
@@ -109,6 +124,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
         <dt>cat &lt;file&gt;</dt><dd>open a file</dd>
         <dt>anything else</dt><dd>search</dd>
         <dt>j / k</dt><dd>move through the files · ↵ opens</dd>
+        <dt>- / h</dt><dd>up a folder</dd>
         <dt>/</dt><dd>focus the prompt (or just start typing)</dd>
         <dt>esc</dt><dd>back to NORMAL</dd>
       </dl>

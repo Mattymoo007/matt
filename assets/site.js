@@ -121,6 +121,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'j' || e.key === 'ArrowDown') return (e.preventDefault(), move(1));
   if (e.key === 'k' || e.key === 'ArrowUp') return (e.preventDefault(), move(-1));
   if (e.key === 'Enter' && rows[pos]?.classList.contains('focus')) return rows[pos].click();
+  if ((e.key === '-' || e.key === 'h') && here) return go(here.includes('/') ? here.split('/')[0] : ''); // up a folder
   if (e.key === '?') return (e.preventDefault(), help.showModal());
   if (e.key === '/' || e.key === ':') return (e.preventDefault(), input.focus());
   if (e.key.length === 1 && /\S/.test(e.key)) {

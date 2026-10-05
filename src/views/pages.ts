@@ -3,7 +3,7 @@ import { html, raw } from 'hono/html';
 import { findImage, imageUrl, resolveLinks, toHtml, toInlineHtml, type Doc, type Site } from '../content.ts';
 import { layout, type Req } from './layout.ts';
 import { person } from './machines.ts';
-import { ago, aside, fileName, inDir } from './ls.ts';
+import { ago, aside, baseName, fileName, inDir } from './ls.ts';
 import { describe, docMarkdown } from './text.ts';
 
 const BLURB: Record<string, string> = {
@@ -19,16 +19,25 @@ const list = (docs: Doc[], withSummary = false) =>
       html`<li><a href="/${d.path}">${d.title}</a><span>${aside(d)}</span>${withSummary ? html`<small>${describe(d.body)}</small>` : ''}</li>`,
   )}</ul>`;
 
+/** The files either side of this one in its folder: ← prev · made/ 3 of 6 · next → */
+function neighbours(doc: Doc, site: Site) {
+  const docs = inDir(site.docs, doc.dir);
+  const i = docs.indexOf(doc);
+  const link = (d: Doc | undefined, label: (name: string) => string) =>
+    d ? html`<a href="/${d.path}">${label(baseName(d))}</a>` : html`<span></span>`;
+  return html`<nav class="term sibs" aria-label="More in ${doc.dir}/"><span class="p">$</span> ls ${doc.dir}/<div>${link(docs[i - 1], (n) => `← ${n}`)}<a href="/${doc.dir}">${doc.dir}/ · ${i + 1} of ${docs.length}</a>${link(docs[i + 1], (n) => `${n} →`)}</div></nav>`;
+}
+
 export function filePage(doc: Doc, site: Site, req: Req) {
   return layout(
     {
       path: doc.path,
       kind: 'file',
-      cmd: `cat ${fileName(doc)}`,
+      cmd: `cat ${baseName(doc)}`,
       file: fileName(doc),
       title: `${doc.title} · Matt Bracke`,
       description: describe(doc.body) || doc.title,
-      body: toHtml(docMarkdown(doc, site)),
+      body: toHtml(docMarkdown(doc, site)) + (doc.dir ? neighbours(doc, site) : ''),
       modified: doc.modified,
     },
     site,
@@ -43,7 +52,7 @@ export function dirPage(dir: string, site: Site, req: Req) {
     {
       path: dir,
       kind: 'dir',
-      cmd: `ls ${dir}/`,
+      cmd: 'ls',
       file: `${dir}/`,
       title,
       description: BLURB[dir] ?? title,
