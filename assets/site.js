@@ -12,7 +12,14 @@ const cwd = dirs.includes(here) ? here : here.split('/').length > 1 ? here.split
 const go = (p) => (location.href = '/' + p);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const label = (e) => (e.p ? `${e.p}.md` : 'README.md');
-const norm = (a) => a.trim().toLowerCase().replace(/^~\/?/, '').replace(/^(\.\/)+/, '').replace(/\.md$/, '').replace(/\/+$/, '');
+const norm = (a) =>
+  a
+    .trim()
+    .toLowerCase()
+    .replace(/^~\/?/, '')
+    .replace(/^(\.\/)+/, '')
+    .replace(/\.md$/, '')
+    .replace(/\/+$/, '');
 
 function show(html) {
   out.innerHTML = html;
@@ -35,7 +42,8 @@ function search(q) {
   return idx.filter((e) => e.t.toLowerCase().includes(s) || e.p.includes(s.replace(/\s+/g, '-'))).slice(0, 8);
 }
 
-const results = (list) => list.map((e) => `<a href="/${e.p}">${esc(label(e))}  <span class="m">${esc(e.t)}</span></a>`).join('');
+const results = (list) =>
+  list.map((e) => `<a href="/${e.p}">${esc(label(e))}  <span class="m">${esc(e.t)}</span></a>`).join('');
 
 const commands = {
   ls: (a) => (!norm(a) ? go('') : dirs.includes(norm(a)) ? go(norm(a)) : `ls: ${a}: No such file or directory`),
@@ -51,7 +59,8 @@ const commands = {
   hello: () => go('hello'),
   help: () => (help.showModal(), ''),
   clear: () => '',
-  ask: () => 'My copy is still learning to talk. Soon you can ask it anything.\nUntil then: <a href="/now">cat now.md</a> · <a href="/hello">cat hello.md</a>',
+  ask: () =>
+    'My copy is still learning to talk. Soon you can ask it anything.\nUntil then: <a href="/now">cat now.md</a> · <a href="/hello">cat hello.md</a>',
   sudo: () => 'nice try 🙃',
   rm: () => 'rm: read-only file system. (Really: the server can only read this folder.)',
   exit: () => 'there is no exit, only <a href="/">cd ~</a>',
@@ -104,11 +113,11 @@ function move(d) {
 
 document.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey || e.target === input || help.open) return;
-  if (e.key === 'j' || e.key === 'ArrowDown') return e.preventDefault(), move(1);
-  if (e.key === 'k' || e.key === 'ArrowUp') return e.preventDefault(), move(-1);
+  if (e.key === 'j' || e.key === 'ArrowDown') return (e.preventDefault(), move(1));
+  if (e.key === 'k' || e.key === 'ArrowUp') return (e.preventDefault(), move(-1));
   if (e.key === 'Enter' && rows[pos]?.classList.contains('focus')) return rows[pos].click();
-  if (e.key === '?') return e.preventDefault(), help.showModal();
-  if (e.key === '/' || e.key === ':') return e.preventDefault(), input.focus();
+  if (e.key === '?') return (e.preventDefault(), help.showModal());
+  if (e.key === '/' || e.key === ':') return (e.preventDefault(), input.focus());
   if (e.key.length === 1 && /\S/.test(e.key)) {
     // just start typing: the prompt catches it
     e.preventDefault();
