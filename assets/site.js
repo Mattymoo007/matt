@@ -52,7 +52,12 @@ const commands = {
     if (d === '' || d === '..' || d === '~') return go(''); // every folder lives in ~
     return dirs.includes(d) ? go(d) : `cd: no such directory: ${a}`;
   },
-  cat: (a) => (findDoc(a) ? go(findDoc(a).p) : `cat: ${a || '?'}: No such file or directory`),
+  cat: (a) =>
+    /^(llms(-full)?\.txt|rss\.xml|sitemap\.xml|robots\.txt)$/.test(norm(a))
+      ? go(norm(a))
+      : findDoc(a)
+        ? go(findDoc(a).p)
+        : `cat: ${a || '?'}: No such file or directory`,
   pwd: () => `~/matt${here ? '/' + here : ''}`,
   whoami: () => go(''),
   echo: (a) => a,

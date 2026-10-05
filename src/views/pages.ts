@@ -2,6 +2,7 @@
 import { html, raw } from 'hono/html';
 import { findImage, imageUrl, resolveLinks, toHtml, toInlineHtml, type Doc, type Site } from '../content.ts';
 import { layout, type Req } from './layout.ts';
+import { person } from './machines.ts';
 import { ago, aside, fileName, inDir } from './ls.ts';
 import { describe, docMarkdown } from './text.ts';
 
@@ -121,7 +122,8 @@ ${
 
 ${docMarkdown(now, site).trim()}
 
-<span class="src">↳ every page is plain markdown for terminals and agents: add .md to any url</span></pre>`
+<span class="src">↳ every page is plain markdown for terminals and agents: add .md to any url
+↳ for agents: <a href="/llms.txt">llms.txt</a> · <a href="/llms-full.txt">llms-full.txt</a> · <a href="/rss.xml">rss.xml</a></span></pre>`
     : ''
 }
 ${raw(toHtml(rest))}
@@ -138,6 +140,7 @@ ${hello ? html`<h2>hello.txt</h2><div class="door">${raw(toHtml(resolveLinks(hel
       body: String(body),
       modified: readme.modified,
       image: photo && imageUrl(photo),
+      jsonLd: person(readme, site, req.origin),
     },
     site,
     req,

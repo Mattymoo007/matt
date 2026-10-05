@@ -9,6 +9,7 @@ import { test } from 'node:test';
 const dir = await mkdtemp(join(tmpdir(), 'matt-gate-'));
 const files: Record<string, string> = {
   'README.md': '---\npublish: true\n---\n# Matt\n\nSee [[Hello world]] and [[Secret plan]].\n',
+  'hello.md': '---\npublish: true\n---\n# hello\n\n- X: [@me](https://x.com/me)\n',
   'notes/Hello world.md': '---\ntitle: Hello world\ndate: 2026-10-05\npublish: true\n---\nFirst note. ![[photo.jpg]]\n',
   'notes/Secret plan.md': '---\npublish: false\n---\nSECRET-draft\n',
   'notes/stringy.md': '---\npublish: "true"\n---\nSECRET-string\n',
@@ -26,6 +27,8 @@ process.env.CONTENT_DIR = dir;
 const { load } = await import('../src/content.ts');
 const { app } = await import('../src/server.ts');
 
+const MACHINES = ['/llms.txt', '/llms-full.txt', '/rss.xml', '/sitemap.xml'];
+
 async function get(path: string, accept = 'text/html') {
   const res = await app.request(path, { headers: { accept } });
   return { status: res.status, body: await res.text() };
@@ -33,7 +36,7 @@ async function get(path: string, accept = 'text/html') {
 
 test('only publish: true (a real boolean) is loaded', async () => {
   const { docs, images } = await load();
-  assert.deepEqual(docs.map((d) => d.path).sort(), ['', 'notes/hello-world']);
+  assert.deepEqual(docs.map((d) => d.path).sort(), ['', 'hello', 'notes/hello-world']);
   assert.deepEqual(images, ['img/photo.jpg']);
 });
 
@@ -54,6 +57,7 @@ test('nothing private is reachable, as HTML or as markdown', async () => {
     '/.secret.jpg',
     '/img/%2e%2e/.secret.jpg',
     '/%2e%2e/%2e%2e/etc/passwd',
+    ...MACHINES,
   ];
   for (const path of paths) {
     for (const accept of ['text/html', '*/*']) {
@@ -81,4 +85,23 @@ test('curl gets markdown, browsers get HTML', async () => {
   assert.match(curl.headers.get('content-type') ?? '', /text\/markdown/);
   assert.match(await curl.text(), /^# Hello world/);
   assert.match((await get('/notes/hello-world')).body, /^<!doctype html>/);
+});
+
+test('machine files list published docs only', async () => {
+  for (const path of MACHINES) {
+    const { status, body } = await get(path, '*/*');
+    assert.equal(status, 200, path);
+    assert.match(body, /hello-world/, `${path} misses a published note`);
+    for (const slug of ['secret-plan', 'stringy', 'broken', 'nofm', 'leak'])
+      assert.ok(!body.includes(slug), `${path} lists ${slug}`);
+  }
+});
+
+test('home carries a schema.org Person built from the folder', async () => {
+  const ld = (await get('/')).body.match(/<script type="application\/ld\+json">(.*?)<\/script>/)?.[1];
+  assert.ok(ld, 'no JSON-LD on /');
+  const person = JSON.parse(ld);
+  assert.equal(person['@type'], 'Person');
+  assert.equal(person.name, 'Matt');
+  assert.deepEqual(person.sameAs, ['https://x.com/me']);
 });

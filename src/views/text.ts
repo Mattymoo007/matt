@@ -1,6 +1,6 @@
 // Plain markdown, for curl, agents and anyone who adds .md to a url.
 import { resolveLinks, type Doc, type Site } from '../content.ts';
-import { inDir, listing } from './ls.ts';
+import { inDir, listing, MACHINES } from './ls.ts';
 
 const SPECS: Record<string, string[]> = { made: ['qty', 'material', 'year', 'status'], ideas: ['status', 'date'] };
 
@@ -16,10 +16,12 @@ export function docMarkdown(doc: Doc, site: Site) {
 }
 
 export function lsText(site: Site, dir = '') {
+  const row = (perm: string, name: string, meta: string) => `${perm}  ${name}`.padEnd(32) + meta;
   if (!dir)
-    return listing(site.docs)
-      .map((r) => `${r.perm}  ${r.name}${r.dir ? '/' : ''}`.padEnd(32) + r.meta)
-      .join('\n');
+    return [
+      ...listing(site.docs).map((r) => row(r.perm, `${r.name}${r.dir ? '/' : ''}`, r.meta)),
+      ...MACHINES.map((m) => row('-r--r--r--', m.path, m.meta)),
+    ].join('\n');
   return inDir(site.docs, dir)
     .map((d) => `${(d.date ?? '').padEnd(12)}${d.path}.md  ${d.title}`)
     .join('\n');

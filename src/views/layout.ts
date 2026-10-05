@@ -1,7 +1,7 @@
 // The ~/matt shell around every page: prompt bar, file list, preview, status bar.
 import { html, raw } from 'hono/html';
 import type { Site } from '../content.ts';
-import { ago, listing, SECTIONS } from './ls.ts';
+import { ago, listing, MACHINES, SECTIONS } from './ls.ts';
 
 export const VERSION = Date.now().toString(36); // busts the asset cache on every deploy
 
@@ -15,6 +15,7 @@ export type Page = {
   body: string; // the preview's HTML
   modified?: Date;
   image?: string;
+  jsonLd?: object; // structured data for search engines and agents
 };
 
 /** Where the request came from, for absolute urls and the curl example. */
@@ -24,10 +25,18 @@ const FAVICON = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#111"/><rect x="38" y="16" width="12" height="32" fill="#2f5d9b"/><path d="M12 40c4-8 8-8 12-4s8 4 12-4" stroke="#f7f6f2" stroke-width="5" fill="none" stroke-linecap="round"/></svg>',
 )}`;
 
-// Prefetch a page when a link is hovered, so moving around feels instant. Raw .md links are skipped.
+// Prefetch a page when a link is hovered, so moving around feels instant. Raw files (.md, .txt, .xml) are skipped.
 const SPECULATION = JSON.stringify({
-  prefetch: [{ where: { and: [{ href_matches: '/*' }, { not: { href_matches: '/*.md' } }] }, eagerness: 'moderate' }],
+  prefetch: [
+    {
+      where: { and: [{ href_matches: '/*' }, { not: { href_matches: ['/*.md', '/*.txt', '/*.xml'] } }] },
+      eagerness: 'moderate',
+    },
+  ],
 });
+
+/** JSON that's safe inside a <script>. */
+const json = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c');
 
 export function layout(p: Page, site: Site, req: Req) {
   const newest = site.docs.reduce<Date | undefined>((n, d) => (!n || d.modified > n ? d.modified : n), undefined);
@@ -57,6 +66,8 @@ ${p.image ? html`<meta property="og:image" content="${req.origin}${p.image}"><me
 <meta name="theme-color" content="#f7f6f2">
 <link rel="icon" href="${FAVICON}">
 ${hasRaw ? html`<link rel="alternate" type="text/markdown" href="${rawHref}">` : ''}
+<link rel="alternate" type="application/rss+xml" title="Matt Bracke" href="/rss.xml">
+${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</script>` : ''}
 <link rel="preload" href="/assets/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/inter-tight.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/site.css?v=${VERSION}">
@@ -76,6 +87,11 @@ ${hasRaw ? html`<link rel="alternate" type="text/markdown" href="${rawHref}">` :
       ${listing(site.docs).map(
         (r) =>
           html`<a class="row${r.dir ? ' dir' : ''}${isActive(r.path, r.dir) ? ' active' : ''}" href="/${r.path}"><span class="perm">${r.perm}</span><span class="name">${r.name}</span><span class="meta">${r.meta}</span></a>`,
+      )}
+      <div class="group">for machines</div>
+      ${MACHINES.map(
+        (m) =>
+          html`<a class="row" href="/${m.path}"><span class="perm">-r--r--r--</span><span class="name">${m.path}</span><span class="meta">${m.meta}</span></a>`,
       )}
     </div></nav>
     <article class="preview">
@@ -99,7 +115,7 @@ ${hasRaw ? html`<link rel="alternate" type="text/markdown" href="${rawHref}">` :
       <p>Every page is also markdown: add .md to the url, or curl it.<br>esc closes this.</p>
     </form>
   </dialog>
-  <script type="application/json" id="idx">${raw(JSON.stringify(index).replace(/</g, '\\u003c'))}</script>
+  <script type="application/json" id="idx">${raw(json(index))}</script>
 </body>
 </html>`;
 }

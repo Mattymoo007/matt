@@ -4,8 +4,9 @@ import { extname, join } from 'node:path';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono, type Context } from 'hono';
-import { CONTENT_DIR, isImage, load, type Doc } from './content.ts';
+import { CONTENT_DIR, isImage, load, type Doc, type Site } from './content.ts';
 import type { Req } from './views/layout.ts';
+import { llmsFull, llmsTxt, robots, rss, sitemap } from './views/machines.ts';
 import { dirPage, filePage, homePage, missingPage } from './views/pages.ts';
 import { dirText, docMarkdown, homeText } from './views/text.ts';
 
@@ -35,6 +36,12 @@ const wantsText = (c: Context) => !(c.req.header('accept') ?? '').includes('text
 const markdown = (c: Context, text: string, status: 200 | 404 = 200) =>
   c.body(text, status, { 'content-type': 'text/markdown; charset=utf-8' });
 
+/** Where the request came from, for absolute urls and the curl example. */
+function request(c: Context): Req {
+  const host = c.req.header('host') ?? 'matthewbracke.com';
+  return { host, origin: `${c.req.header('x-forwarded-proto') ?? 'http'}://${host}` };
+}
+
 export const app = new Hono();
 
 app.get('/health', (c) => c.text('ok'));
@@ -44,6 +51,15 @@ app.use('/assets/*', async (c, next) => {
   if (c.res.ok) c.header('cache-control', 'public, max-age=31536000, immutable'); // urls carry ?v=
 });
 app.use('/assets/*', serveStatic({ root: './' }));
+
+// For machines. Same folder, same gate: everything is built from load().
+const machine = (type: string, build: (site: Site, origin: string) => string) => async (c: Context) =>
+  c.body(build(await load(), request(c).origin), 200, { 'content-type': `${type}; charset=utf-8` });
+app.get('/llms.txt', machine('text/plain', llmsTxt));
+app.get('/llms-full.txt', machine('text/plain', llmsFull));
+app.get('/rss.xml', machine('application/rss+xml', rss));
+app.get('/sitemap.xml', machine('application/xml', sitemap));
+app.get('/robots.txt', (c) => c.text(robots(request(c).origin)));
 
 app.get('*', async (c) => {
   const site = await load();
@@ -62,8 +78,7 @@ app.get('*', async (c) => {
   if (raw) path = path.slice(0, -3);
   if (path === 'README') path = '';
   const text = raw || wantsText(c);
-  const host = c.req.header('host') ?? 'matthewbracke.com';
-  const req: Req = { host, origin: `${c.req.header('x-forwarded-proto') ?? 'http'}://${host}` };
+  const req = request(c);
 
   const doc = site.docs.find((d) => d.path === path) ?? (path === '' ? PLACEHOLDER : undefined);
   if (doc && path === '') return text ? markdown(c, homeText(doc, site)) : c.html(homePage(doc, site, req));

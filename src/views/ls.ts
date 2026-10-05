@@ -21,6 +21,16 @@ export function ago(date: Date) {
 
 export const inDir = (docs: Doc[], dir: string) => docs.filter((d) => d.dir === dir);
 
+/** Every doc in reading order: README, now, then each folder (newest first), then hello. */
+export const ordered = (docs: Doc[]) => [...docs].sort((a, b) => rank(a.dir || a.path) - rank(b.dir || b.path));
+
+/** The same folder, for agents and feed readers. */
+export const MACHINES = [
+  { path: 'llms.txt', meta: 'index for agents' },
+  { path: 'llms-full.txt', meta: 'everything, one file' },
+  { path: 'rss.xml', meta: 'feed' },
+];
+
 /** Top-level files, then the folders that have something in them, in mockup order. */
 export function listing(docs: Doc[]): Row[] {
   const files = inDir(docs, '').map((d) => ({
