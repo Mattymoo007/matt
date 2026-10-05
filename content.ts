@@ -51,26 +51,47 @@ async function readDoc(abs: string): Promise<Doc | undefined> {
   }
 }
 
-let cache: { at: number; docs: Doc[] } | undefined;
+const IMAGE = /\.(jpe?g|png|webp|gif|svg|avif)$/i;
+export const isImage = (p: string) => IMAGE.test(p);
 
-/** Every published doc, newest first. Re-reads the folder at most every 5 seconds. */
-export async function load(): Promise<Doc[]> {
-  if (cache && Date.now() - cache.at < 5_000) return cache.docs;
+let cache: { at: number; docs: Doc[]; images: string[] } | undefined;
+
+/** Reads the folder at most every 5 seconds. Hidden files and folders are ignored. */
+async function scan() {
+  if (cache && Date.now() - cache.at < 5_000) return cache;
   const entries = await readdir(CONTENT_DIR, { withFileTypes: true, recursive: true }).catch(() => []);
   const files = entries
-    .filter((e) => e.isFile() && e.name.endsWith('.md') && !join(e.parentPath, e.name).includes('/.'))
-    .map((e) => join(e.parentPath, e.name));
-  const docs = (await Promise.all(files.map(readDoc))).filter((d) => d !== undefined);
+    .filter((e) => e.isFile())
+    .map((e) => relative(CONTENT_DIR, join(e.parentPath, e.name)))
+    .filter((f) => !f.split('/').some((part) => part.startsWith('.')));
+  const docs = (await Promise.all(files.filter((f) => f.endsWith('.md')).map((f) => readDoc(join(CONTENT_DIR, f))))).filter((d) => d !== undefined);
   docs.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || +b.modified - +a.modified);
-  cache = { at: Date.now(), docs };
-  return docs;
+  cache = { at: Date.now(), docs, images: files.filter(isImage) };
+  return cache;
 }
 
-/** Markdown with Obsidian [[wikilinks]] resolved: links to public docs, plain text for anything else. */
-export function toMarkdown(doc: Doc, docs: Doc[]) {
+/** Every published doc, newest first. */
+export const load = async () => (await scan()).docs;
+
+/** Every image in the folder. Being in Public/ is what makes an image public. */
+export const images = async () => (await scan()).images;
+
+/** Resolves 'img/x.jpg', '[[x.jpg]]' or 'x.jpg' to an image path inside the folder, like Obsidian does. */
+export function findImage(ref: string, imgs: string[]) {
+  const clean = ref.replace(/^!?\[\[|\]\]$/g, '').split('|')[0].replace(/^\/+/, '').trim().toLowerCase();
+  return imgs.find((p) => p.toLowerCase() === clean) ?? imgs.find((p) => basename(p).toLowerCase() === basename(clean));
+}
+
+export const imageUrl = (path: string) => '/' + path.split('/').map(encodeURIComponent).join('/');
+
+/** Markdown with Obsidian [[wikilinks]] resolved: links to public docs, plain text for anything else; ![[image]] embeds. */
+export function toMarkdown(doc: Doc, docs: Doc[], imgs: string[] = []) {
   const byName = new Map(docs.map((d) => [basename(d.file, '.md').toLowerCase(), d]));
   return doc.body.replace(/(!?)\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, (_, embed, target, label) => {
-    if (embed) return ''; // embeds (images, transclusions) aren't supported yet
+    if (embed) {
+      const img = isImage(target) ? findImage(target, imgs) : undefined;
+      return img ? `![${basename(img).replace(IMAGE, '')}](${imageUrl(img)})` : ''; // transclusions aren't supported
+    }
     const d = byName.get(target.trim().toLowerCase());
     const text = label ?? target;
     return d ? `[${text}](/${d.path})` : text;
@@ -78,3 +99,4 @@ export function toMarkdown(doc: Doc, docs: Doc[]) {
 }
 
 export const toHtml = (markdown: string) => marked.parse(markdown) as string;
+export const toInlineHtml = (markdown: string) => marked.parseInline(markdown) as string;

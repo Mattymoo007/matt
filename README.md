@@ -7,10 +7,13 @@ The source of [matthewbracke.com](https://matthewbracke.com): a tiny [Hono](http
 - **Every page is also markdown**: `curl matthewbracke.com`, or add `.md` to any URL.
 
 ```
-content.ts   reads the folder, the publish gate, [[wikilinks]]
+content.ts   reads the folder, the publish gate, [[wikilinks]] and images
 view.ts      the ~/matt shell (HTML) and the plain-text views
 server.ts    routes
+assets/      site.css, site.js (the prompt, j/k keys, the Gent clock), fonts
 ```
+
+Fonts: [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) and [Inter Tight](https://github.com/rsms/inter), SIL Open Font License 1.1 (see `assets/fonts/`).
 
 ```sh
 pnpm install
