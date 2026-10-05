@@ -53,6 +53,7 @@ a:hover {
 /* ---- prompt bar ---- */
 .bar {
   position: relative;
+  z-index: 10; /* view-transition-name makes the bar a stacking context: lift it so .out covers the page */
   display: flex;
   align-items: center;
   gap: 10px;
