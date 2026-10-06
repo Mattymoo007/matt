@@ -628,7 +628,7 @@ dialog p {
   margin-top: 14px;
 }
 
-@media (max-width: 1279px) {
+@media (max-width: 1449px) {
   main {
     grid-template-columns: 330px 1fr;
   }
