@@ -92,6 +92,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
 <link rel="stylesheet" href="/assets/site.css?v=${VERSION}">
 <script src="/assets/site.js?v=${VERSION}" defer></script>
 <script type="speculationrules">${raw(SPECULATION)}</script>
+<script defer src="https://umami.matthewbracke.com/script.js" data-website-id="4cd69a4d-1721-4967-a3e6-60158cba1e44" data-domains="matthewbracke.com"></script>
 </head>
 <body class="page-${p.kind}" data-path="${p.path}">
   <form class="bar" role="search" autocomplete="off">
