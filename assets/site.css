@@ -38,7 +38,6 @@
   --term-prompt: #7fa7dd;
   --term-mute: #8a8a8a;
   --photo-blend: multiply;
-  --glow: none;
 }
 :root[data-theme='night'] {
   color-scheme: dark;
@@ -81,7 +80,6 @@
   --term-prompt: #36f9f6;
   --term-mute: #848bbd;
   --photo-blend: normal;
-  --glow: 0 0 2px #fff8, 0 0 12px #ff7edb99, 0 0 28px #fe445055;
 }
 * {
   box-sizing: border-box;
@@ -310,7 +308,6 @@ main {
   display: none;
 }
 .preview h1 {
-  text-shadow: var(--glow);
   font-weight: 500;
   font-size: 56px;
   letter-spacing: -0.035em;
@@ -586,7 +583,6 @@ main {
   border: 0;
   background: var(--chip);
   color: var(--chip-ink);
-  text-shadow: var(--glow);
   cursor: pointer;
 }
 .status .theme::after {
