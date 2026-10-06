@@ -1,10 +1,9 @@
-// ~/matt: the prompt, the keys and the clock. No framework, no build.
+// ~/matt: the prompt, the keys, the themes and the clock. No framework, no build.
 const $ = (s) => document.querySelector(s);
 const idx = JSON.parse($('#idx').textContent); // [{ p: 'notes/x', t: 'Title', d: 'notes' }]
 const input = $('.bar input');
 const out = $('.out');
 const help = $('#help');
-const mode = $('.status .mode');
 const here = document.body.dataset.path;
 const dirs = [...new Set(idx.map((e) => e.d).filter(Boolean))];
 const cwd = dirs.includes(here) ? here : here.split('/').length > 1 ? here.split('/')[0] : '';
@@ -66,12 +65,18 @@ const commands = {
   clear: () => '',
   ask: () =>
     'My copy is still learning to talk. Soon you can ask it anything.\nUntil then: <a href="/now">cat now.md</a> · <a href="/hello">cat hello.md</a>',
+  theme: (a) => {
+    const name = a ? THEMES.find((t) => t.startsWith(a.trim().toLowerCase())) : nextTheme();
+    if (!name) return `theme: ${esc(a)}: try ${THEMES.join(' · ')}`;
+    setTheme(name);
+  },
   sudo: () => 'nice try 🙃',
   rm: () => 'rm: read-only file system. (Really: the server can only read this folder.)',
   exit: () => 'there is no exit, only <a href="/">cd ~</a>',
 };
 for (const alias of ['open', 'less', 'more', 'vim', 'nano', 'head', 'tail']) commands[alias] = commands.cat;
 commands['?'] = commands.man = commands.help;
+commands.colo = commands.colorscheme = commands.theme;
 commands.mail = commands.contact = commands.hello;
 
 function run(line) {
@@ -96,8 +101,6 @@ $('.bar').addEventListener('submit', (e) => {
   e.preventDefault();
   run(input.value);
 });
-input.addEventListener('focus', () => (mode.textContent = 'INSERT'));
-input.addEventListener('blur', () => (mode.textContent = 'NORMAL'));
 input.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     input.value = '';
@@ -135,6 +138,24 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.bar')) show('');
 });
+
+// ---- themes: day, night and synthwave '84. The colours live in site.css; the choice is remembered on this device. ----
+const THEMES = ['day', 'night', 'synthwave'];
+const root = document.documentElement;
+const syncThemeColor = () =>
+  ($('meta[name=theme-color]').content = getComputedStyle(root).getPropertyValue('--bg').trim());
+function setTheme(name) {
+  const apply = () => ((root.dataset.theme = name), syncThemeColor());
+  if (document.startViewTransition)
+    document.startViewTransition(apply).ready.catch(() => {}); // crossfade; skipped is fine
+  else apply();
+  try {
+    localStorage.theme = name;
+  } catch {}
+}
+const nextTheme = () => THEMES[(THEMES.indexOf(root.dataset.theme) + 1) % THEMES.length];
+$('.status .theme').addEventListener('click', () => setTheme(nextTheme()));
+syncThemeColor();
 
 // ---- clock: what time it is where I am ----
 const clock = $('.clock');

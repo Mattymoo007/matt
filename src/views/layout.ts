@@ -45,6 +45,9 @@ function crumbs(path: string) {
   return html`<span class="crumbs"><a href="/">~/matt</a>${parts.map((d, i) => html`/<a href="/${parts.slice(0, i + 1).join('/')}">${d}</a>`)}${last ? `/${last}` : ''}</span>`;
 }
 
+// Runs before the first paint so a saved theme never flashes: the visitor's choice, else their system's light or dark.
+const THEME = `{let t;try{t=localStorage.theme}catch{}document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'night':'day')}`;
+
 export function layout(p: Page, site: Site, req: Req) {
   const newest = site.docs.reduce<Date | undefined>((n, d) => (!n || d.modified > n ? d.modified : n), undefined);
   const url = `${req.origin}/${p.path}`;
@@ -79,6 +82,7 @@ export function layout(p: Page, site: Site, req: Req) {
 <meta property="og:type" content="${p.kind === 'file' ? 'article' : 'website'}">
 ${p.image ? html`<meta property="og:image" content="${req.origin}${p.image}"><meta name="twitter:card" content="summary_large_image">` : ''}
 <meta name="theme-color" content="#f7f6f2">
+<script>${raw(THEME)}</script>
 <link rel="icon" href="${FAVICON}">
 ${hasRaw ? html`<link rel="alternate" type="text/markdown" href="${rawHref}">` : ''}
 <link rel="alternate" type="application/rss+xml" title="Matt Bracke" href="/rss.xml">
@@ -115,7 +119,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
       ${raw(p.body)}
     </article>
   </main>
-  <footer class="status"><span class="mode">NORMAL</span><span>${p.file}</span><span class="grow"></span><span class="clock">Gent · Earth</span><span>utf-8</span><span>j/k · ? help</span></footer>
+  <footer class="status"><button class="theme" type="button" title="Switch theme: day, night, synthwave '84"></button><span>${p.file}</span><span class="grow"></span><span class="clock">Gent · Earth</span><span>utf-8</span><span>j/k · ? help</span></footer>
   <dialog id="help" aria-label="Keys and commands">
     <form method="dialog">
       <dl>
@@ -126,7 +130,8 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
         <dt>j / k</dt><dd>move through the files · ↵ opens</dd>
         <dt>- / h</dt><dd>up a folder</dd>
         <dt>/</dt><dd>focus the prompt (or just start typing)</dd>
-        <dt>esc</dt><dd>back to NORMAL</dd>
+        <dt>esc</dt><dd>close the prompt</dd>
+        <dt>theme [name]</dt><dd>day · night · synthwave · or click the bottom-left corner</dd>
       </dl>
       <p>Every page is also markdown: add .md to the url, or curl it.<br>esc closes this.</p>
     </form>

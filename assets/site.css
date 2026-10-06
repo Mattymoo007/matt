@@ -12,15 +12,76 @@
 }
 
 :root {
-  --bg: #f7f6f2;
-  --ink: #111;
-  --mute: #888;
-  --faint: #bbb;
-  --line: #1111221f;
-  --sel: #dfe6f0;
-  --accent: #2f5d9b;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: 'Inter Tight', system-ui, sans-serif;
+}
+
+/* ---- themes: every colour is a token. Day is the default; night and synthwave '84 override it. ---- */
+:root {
+  color-scheme: light;
+  --name: 'DAY'; /* shown on the switcher in the status bar */
+  --bg: #f7f6f2;
+  --ink: #111;
+  --ink-2: #444;
+  --mute: #888;
+  --faint: #bbb;
+  --mark: #bbb; /* the # in headings */
+  --line: #1111221f;
+  --rule: #111; /* the blueprint's heavy lines */
+  --sel: #dfe6f0;
+  --hover: #1111110d;
+  --accent: #2f5d9b;
+  --chip: #111;
+  --chip-ink: #f7f6f2;
+  --term-bg: #111;
+  --term-ink: #e8e6df;
+  --term-prompt: #7fa7dd;
+  --term-mute: #8a8a8a;
+  --photo-blend: multiply;
+  --glow: none;
+}
+:root[data-theme='night'] {
+  color-scheme: dark;
+  --name: 'NIGHT';
+  --bg: #141413;
+  --ink: #e8e6df;
+  --ink-2: #b5b3ad;
+  --mute: #8a8a85;
+  --faint: #4a4a47;
+  --mark: #4a4a47;
+  --line: #ffffff1a;
+  --rule: #3d3d3a;
+  --sel: #22324a;
+  --hover: #ffffff0d;
+  --accent: #7fa7dd;
+  --chip: #e8e6df;
+  --chip-ink: #141413;
+  --term-bg: #0c0c0b;
+  --photo-blend: normal;
+}
+/* github.com/robb0wen/synthwave-vscode */
+:root[data-theme='synthwave'] {
+  color-scheme: dark;
+  --name: "SYNTHWAVE '84";
+  --bg: #262335;
+  --ink: #fdfdfd;
+  --ink-2: #c9c2dc;
+  --mute: #848bbd;
+  --faint: #495495;
+  --mark: #fede5d;
+  --line: #49549566;
+  --rule: #495495;
+  --sel: #34294f;
+  --hover: #37294d99;
+  --accent: #ff7edb;
+  --chip: #ff7edb;
+  --chip-ink: #262335;
+  --term-bg: #171520;
+  --term-ink: #fdfdfd;
+  --term-prompt: #36f9f6;
+  --term-mute: #848bbd;
+  --photo-blend: normal;
+  --glow: 0 0 2px #fff8, 0 0 12px #ff7edb99, 0 0 28px #fe445055;
 }
 * {
   box-sizing: border-box;
@@ -58,7 +119,7 @@ a:hover {
   align-items: center;
   gap: 10px;
   padding: 14px 24px;
-  border-bottom: 1px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
 }
 .bar label {
   white-space: nowrap;
@@ -118,7 +179,7 @@ a:hover {
   top: 100%;
   z-index: 5;
   background: var(--bg);
-  border-bottom: 1px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
   padding: 10px 24px 14px;
   white-space: pre-wrap;
 }
@@ -145,7 +206,7 @@ main {
   grid-template-columns: 400px 1fr;
 }
 .ls {
-  border-right: 1px solid var(--ink);
+  border-right: 1px solid var(--rule);
   padding: 18px 0;
 }
 .ls-inner {
@@ -185,7 +246,7 @@ main {
 }
 .row:hover,
 .row.focus {
-  background: #1111110d;
+  background: var(--hover);
   color: inherit;
 }
 .row.focus {
@@ -249,6 +310,7 @@ main {
   display: none;
 }
 .preview h1 {
+  text-shadow: var(--glow);
   font-weight: 500;
   font-size: 56px;
   letter-spacing: -0.035em;
@@ -258,7 +320,7 @@ main {
 }
 .preview h1::before {
   content: '# ';
-  color: var(--faint);
+  color: var(--mark);
   font-weight: 400;
 }
 .preview h2 {
@@ -267,7 +329,7 @@ main {
 }
 .preview h2::before {
   content: '## ';
-  color: var(--faint);
+  color: var(--mark);
 }
 .preview h2 .aside {
   color: var(--mute);
@@ -300,7 +362,7 @@ main {
 .preview blockquote {
   border-left: 2px solid var(--accent);
   padding-left: 14px;
-  color: #444;
+  color: var(--ink-2);
 }
 .preview code {
   font: 14px var(--mono);
@@ -310,8 +372,8 @@ main {
 .preview pre,
 .term {
   font: 12.5px/1.6 var(--mono);
-  background: var(--ink);
-  color: #e8e6df;
+  background: var(--term-bg);
+  color: var(--term-ink);
   padding: 16px 18px;
   overflow-x: auto;
   white-space: pre-wrap;
@@ -322,10 +384,10 @@ main {
   font: inherit;
 }
 .term .p {
-  color: #7fa7dd;
+  color: var(--term-prompt);
 }
 .term .src {
-  color: #8a8a8a;
+  color: var(--term-mute);
 }
 .sibs {
   margin-top: 56px;
@@ -344,10 +406,10 @@ main {
   white-space: nowrap;
 }
 .sibs a:hover {
-  color: #7fa7dd;
+  color: var(--term-prompt);
 }
 .sibs div > :nth-child(2) {
-  color: #8a8a8a;
+  color: var(--term-mute);
 }
 .sibs div > :last-child {
   text-align: right;
@@ -363,7 +425,7 @@ main {
 }
 .preview th,
 .preview td {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--rule);
   padding: 6px 12px;
   text-align: left;
   vertical-align: top;
@@ -403,7 +465,7 @@ main {
   width: 100%;
   margin: 0;
   filter: grayscale(1) contrast(1.15);
-  mix-blend-mode: multiply;
+  mix-blend-mode: var(--photo-blend);
 }
 .photo::after {
   content: '';
@@ -442,7 +504,7 @@ main {
   gap: 12px;
 }
 .now div {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--rule);
   padding: 12px 14px;
   font-size: 15px;
   line-height: 1.4;
@@ -506,21 +568,29 @@ main {
 /* ---- status bar ---- */
 .status {
   display: flex;
-  border-top: 1px solid var(--ink);
+  border-top: 1px solid var(--rule);
   font-size: 11px;
   position: sticky;
   bottom: 0;
   background: var(--bg);
 }
-.status span {
+.status > * {
   padding: 5px 14px;
   border-right: 1px solid var(--line);
   white-space: nowrap;
 }
-.status .mode {
-  background: var(--ink);
-  color: var(--bg);
+/* the theme switcher: its label comes from the theme's --name */
+.status .theme {
+  font: inherit;
   font-weight: 700;
+  border: 0;
+  background: var(--chip);
+  color: var(--chip-ink);
+  text-shadow: var(--glow);
+  cursor: pointer;
+}
+.status .theme::after {
+  content: var(--name);
 }
 .status .grow {
   flex: 1;
@@ -530,15 +600,15 @@ main {
 /* ---- help ---- */
 dialog {
   margin: auto;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--rule);
   background: var(--bg);
   color: var(--ink);
   padding: 22px 26px;
   font: 13px/1.7 var(--mono);
-  box-shadow: 6px 6px 0 var(--ink);
+  box-shadow: 6px 6px 0 var(--rule);
 }
 dialog::backdrop {
-  background: #f7f6f2b3;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
 }
 dialog:focus,
 dialog form:focus {
@@ -553,7 +623,7 @@ dialog dt {
   font-weight: 700;
 }
 dialog dd {
-  color: #555;
+  color: var(--ink-2);
 }
 dialog p {
   color: var(--mute);
@@ -581,7 +651,7 @@ dialog p {
   }
   .ls {
     border-right: 0;
-    border-bottom: 1px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
     padding: 12px 0;
   }
   .ls-inner {
@@ -634,7 +704,7 @@ dialog p {
   .now {
     grid-template-columns: 1fr;
   }
-  .status span:nth-child(n + 4) {
+  .status > :nth-child(n + 4) {
     display: none;
   }
 }
