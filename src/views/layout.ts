@@ -65,7 +65,7 @@ export function layout(p: Page, site: Site, req: Req) {
     const docs = inDir(site.docs, dir);
     return docs.map(
       (d, i) =>
-        html`<a class="row leaf${d.path === p.path ? ' active' : ''}" href="/${d.path}"><span class="perm"></span><span class="name"><i>${i === docs.length - 1 ? '└──' : '├──'}</i>${baseName(d)}</span><span class="meta">${d.date ?? ''}</span></a>`,
+        html`<a class="row leaf${d.path === p.path ? ' active' : ''}" href="/${d.path}"><span class="perm"></span><span class="name"><i>${i === docs.length - 1 ? '└──' : '├──'}</i>${baseName(d)}</span></a>`,
     );
   };
 

@@ -44,5 +44,5 @@ export function describe(markdown: string) {
       .map((l) => l.trim())
       .find((l) => l && !/^(#|[-*|>!]|```)/.test(l)) ?? '';
   const text = line.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '');
-  return text.length > 160 ? `${text.slice(0, 157)}…` : text;
+  return text.length > 160 ? `${text.slice(0, 160).replace(/\W*\s+\S*$/, '')}…` : text; // cut at a word
 }

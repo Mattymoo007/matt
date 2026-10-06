@@ -26,7 +26,7 @@
   --mute: #888;
   --faint: #bbb;
   --mark: #bbb; /* the # in headings */
-  --line: #1111221f;
+  --line: #11112233;
   --rule: #111; /* the blueprint's heavy lines */
   --sel: #dfe6f0;
   --hover: #1111110d;
@@ -48,7 +48,7 @@
   --mute: #8a8a85;
   --faint: #4a4a47;
   --mark: #4a4a47;
-  --line: #ffffff1a;
+  --line: #ffffff26;
   --rule: #3d3d3a;
   --sel: #22324a;
   --hover: #ffffff0d;
@@ -68,7 +68,7 @@
   --mute: #848bbd;
   --faint: #495495;
   --mark: #fede5d;
-  --line: #49549566;
+  --line: #495495aa;
   --rule: #495495;
   --sel: #34294f;
   --hover: #37294d99;
@@ -277,11 +277,14 @@ main {
   font: 17px/1.6 var(--sans);
   min-width: 0;
 }
+/* every block lines up at one width; running text keeps a readable measure */
 .preview > * {
+  max-width: 860px;
+}
+.preview > :is(p, ul:not(.list), ol, blockquote, .door) {
   max-width: 680px;
 }
 .preview .file {
-  max-width: 860px;
   font: 11px var(--mono);
   color: var(--mute);
   margin-bottom: 28px;
@@ -313,7 +316,6 @@ main {
   letter-spacing: -0.035em;
   line-height: 1.02;
   margin-bottom: 20px;
-  max-width: 860px;
 }
 .preview h1::before {
   content: '# ';
@@ -417,6 +419,7 @@ main {
   margin: 28px 0;
 }
 .preview table {
+  margin-bottom: 24px;
   border-collapse: collapse;
   font: 12px/1.5 var(--mono);
 }
@@ -485,7 +488,6 @@ main {
   grid-template-columns: 1fr 230px;
   gap: 40px;
   align-items: end;
-  max-width: 900px;
 }
 .intro > div > :last-child {
   margin-bottom: 0;
@@ -519,12 +521,12 @@ main {
   padding: 0 !important;
 }
 .list li {
-  padding: 8px 0;
+  padding: 12px 0;
   margin: 0;
   border-bottom: 1px dashed var(--line);
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 16px;
+  gap: 2px 16px;
   align-items: baseline;
 }
 .list li a {
@@ -626,7 +628,7 @@ dialog p {
   margin-top: 14px;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1279px) {
   main {
     grid-template-columns: 330px 1fr;
   }
@@ -669,6 +671,12 @@ dialog p {
     gap: 2px;
   }
   .sibs div > :last-child {
+    text-align: left;
+  }
+  .list li {
+    grid-template-columns: 1fr; /* the detail goes under the title */
+  }
+  .list li span {
     text-align: left;
   }
   .page-file .ls,

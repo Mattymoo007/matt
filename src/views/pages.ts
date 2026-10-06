@@ -22,6 +22,7 @@ const list = (docs: Doc[], withSummary = false) =>
 /** The files either side of this one in its folder: ← prev · made/ 3 of 6 · next → */
 function neighbours(doc: Doc, site: Site) {
   const docs = inDir(site.docs, doc.dir);
+  if (docs.length < 2) return '';
   const i = docs.indexOf(doc);
   const link = (d: Doc | undefined, label: (name: string) => string) =>
     d ? html`<a href="/${d.path}">${label(baseName(d))}</a>` : html`<span></span>`;
