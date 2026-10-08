@@ -277,11 +277,12 @@ main {
   font: 17px/1.6 var(--sans);
   min-width: 0;
 }
-/* every block lines up at one width; running text keeps a readable measure */
+/* blocks fill the pane like a terminal (capped for ultrawide screens); running text keeps a readable measure */
 .preview > * {
-  max-width: 860px;
+  max-width: 1400px;
 }
-.preview > :is(p, ul:not(.list), ol, blockquote, .door) {
+.preview > :is(p, ul:not(.list), ol, blockquote, .door),
+.preview .lede {
   max-width: 680px;
 }
 .preview .file {
