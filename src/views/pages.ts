@@ -39,11 +39,11 @@ function neighbours(doc: Doc, site: Site) {
   return html`<nav class="term sibs" aria-label="More in ${doc.dir}/"><span class="p">$</span> ls ${doc.dir}/<div><a href="/${doc.dir}">${doc.dir}/ · ${i + 1} of ${docs.length}</a>${link(docs[i - 1], (n) => `← ${n}`)}${link(docs[i + 1], (n) => `${n} →`)}</div></nav>`;
 }
 
-/** `images:` as a contact strip: small tinted squares; hover or tap one and the whole photo opens underneath. */
+/** `images:` as a contact strip: small squares in full colour; hover or tap one and the whole photo opens underneath. */
 const strip = (figs: Figure[]) =>
   html`<div class="figs">${figs.map(
     (f, i) =>
-      html`<figure tabindex="0"><span class="tint"><img src="${f.src}" alt="${f.caption}"></span><span class="lens" aria-hidden="true"><span class="tint"><img src="${f.src}" alt=""></span><figcaption>Fig. ${i + 1}${f.caption ? ` · ${f.caption}` : ''}</figcaption></span></figure>`,
+      html`<figure tabindex="0"><img src="${f.src}" alt="${f.caption}"><span class="lens" aria-hidden="true"><img src="${f.src}" alt=""><figcaption>Fig. ${i + 1}${f.caption ? ` · ${f.caption}` : ''}</figcaption></span></figure>`,
   )}</div>`;
 
 export function filePage(doc: Doc, site: Site, req: Req) {
