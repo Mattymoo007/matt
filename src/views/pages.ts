@@ -39,7 +39,7 @@ function neighbours(doc: Doc, site: Site) {
   return html`<nav class="term sibs" aria-label="More in ${doc.dir}/"><span class="p">$</span> ls ${doc.dir}/<div><a href="/${doc.dir}">${doc.dir}/ · ${i + 1} of ${docs.length}</a>${link(docs[i - 1], (n) => `← ${n}`)}${link(docs[i + 1], (n) => `${n} →`)}</div></nav>`;
 }
 
-/** `images:` as a contact strip: small squares in full colour; hover or tap one and the whole photo opens underneath. */
+/** `images:` as a contact strip: small squares; hover or tap one and the whole photo opens underneath. */
 const strip = (figs: Figure[]) =>
   html`<div class="figs">${figs.map(
     (f, i) =>
@@ -143,7 +143,7 @@ export function homePage(readme: Doc, site: Site, req: Req) {
   // `focus: 45% 17%` in the frontmatter says where the face is.
   const focus = String(readme.data.focus ?? '').match(/^([\d.]+%) ([\d.]+%)$/);
   const figure = photo
-    ? html`<figure class="photo" tabindex="0"${focus ? raw(` style="--x: ${focus[1]}; --y: ${focus[2]}"`) : ''}><span class="lens tint"><img src="${imageUrl(photo)}" alt="${caption}"><figcaption>${caption}</figcaption></span></figure>`
+    ? html`<figure class="photo" tabindex="0"${focus ? raw(` style="--x: ${focus[1]}; --y: ${focus[2]}"`) : ''}><span class="lens"><img src="${imageUrl(photo)}" alt="${caption}"><figcaption>${caption}</figcaption></span></figure>`
     : '';
   const introHtml = toHtml(intro)
     .replace('<p>', '<p class="lede">')

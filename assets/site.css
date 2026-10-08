@@ -445,35 +445,14 @@ main {
   color: var(--mute);
 }
 
-/* blueprint duotone: every photo looks like it belongs to the same set */
+/* photos in the text, in full colour */
 .preview img {
   display: block;
   max-width: 100%;
   height: auto;
   margin: 18px 0;
-  filter: grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(1.05);
 }
-/* the blueprint tint for small photos: grayscale, with the accent screened over it */
-.tint {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  background: var(--bg);
-}
-.tint img {
-  filter: grayscale(1) contrast(1.15);
-  mix-blend-mode: var(--photo-blend);
-}
-.tint::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent);
-  mix-blend-mode: screen;
-  opacity: 0.3;
-  pointer-events: none;
-}
-/* the photo: a lens on the face next to the name; hover or tap opens the whole picture */
+/* the photo: a lens on the face next to the name, in blueprint tint; hover or tap opens the whole picture */
 .who {
   display: flex;
   align-items: center;
@@ -500,6 +479,8 @@ main {
   left: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  background: var(--bg);
   outline: 1px solid var(--rule);
   transition:
     width 0.35s,
@@ -511,9 +492,20 @@ main {
   margin: 0;
   object-fit: cover;
   object-position: var(--x) var(--y);
+  filter: grayscale(1) contrast(1.15);
+  mix-blend-mode: var(--photo-blend);
   transform-origin: var(--x) var(--y);
   transform: translate(calc(50% - var(--x)), calc(50% - var(--y))) scale(4); /* the face, centred */
   transition: transform 0.35s;
+}
+.photo .lens::after {
+  content: ''; /* the accent, screened over the grayscale */
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  mix-blend-mode: screen;
+  opacity: 0.3;
+  pointer-events: none;
 }
 .photo figcaption {
   position: absolute;
@@ -539,7 +531,7 @@ main {
   transition-delay: 0.2s;
 }
 
-/* the contact strip (`images:` in the frontmatter): squares the size of the README lens, in full colour; hover or tap opens the photo underneath */
+/* the contact strip (`images:` in the frontmatter): squares the size of the README lens; hover or tap opens the photo underneath */
 .figs {
   position: relative; /* the open photo is placed against the strip, so it never runs off the page */
   display: flex;
@@ -553,9 +545,7 @@ main {
   cursor: zoom-in;
 }
 .preview .figs img {
-  display: block;
   margin: 0;
-  filter: none; /* these stay in colour */
 }
 .preview .figs figure > img {
   width: 48px;
