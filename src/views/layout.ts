@@ -106,7 +106,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
       <div class="cmd">total ${site.docs.length}${newest ? ` · last write ${ago(newest)}` : ''}</div>
       ${listing(site.docs).map(
         (r) =>
-          html`<a class="row${r.dir ? ' dir' : ''}${r.path === p.path ? ' active' : ''}" href="/${r.path}"><span class="perm">${r.perm}</span><span class="name">${r.name}</span><span class="meta">${r.meta}</span></a>${r.dir && r.path === cwd ? tree(r.path) : ''}`,
+          html`<a class="row${r.dir ? ' dir' : ''}${r.path === p.path ? ' active' : r.path === cwd ? ' open' : ''}" href="/${r.path}"><span class="perm">${r.perm}</span><span class="name">${r.name}</span><span class="meta">${r.meta}</span></a>${r.dir && r.path === cwd ? tree(r.path) : ''}`,
       )}
       <div class="group">for machines</div>
       ${MACHINES.map(
@@ -115,7 +115,6 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
       )}
     </div></nav>
     <article class="preview">
-      ${p.kind === 'home' ? '' : html`<a class="up" href="/${parent}">cd ..</a>`}
       <div class="file">${crumbs(p.file)}<span class="grow"></span>${p.modified ? html`<span>modified ${p.modified.toISOString().slice(0, 10)}</span>` : ''}${hasRaw ? html`<a href="${rawHref}" title="This page as markdown">raw</a>` : ''}</div>
       ${raw(p.body)}
     </article>

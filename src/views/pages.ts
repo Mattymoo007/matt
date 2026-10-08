@@ -67,7 +67,7 @@ export function dirPage(dir: string, site: Site, req: Req) {
 export function missingPage(path: string, site: Site, req: Req) {
   const body = html`<pre class="term"><span class="p">$</span> cat ${path}
 cat: ${path}: No such file or directory</pre>
-<p>You've drifted off the sheet. You are here → <a href="/">cd ~</a></p>`;
+<p>You've drifted off the sheet. You are here → <a href="/">cd&nbsp;~</a></p>`;
   return layout(
     {
       path,
@@ -116,12 +116,18 @@ export function homePage(readme: Doc, site: Site, req: Req) {
   const notes = inDir(site.docs, 'notes');
   const ideas = inDir(site.docs, 'ideas').filter((d) => (d.data.status ?? 'open') === 'open');
   const items = now ? nowItems(now) : [];
+  // a tiny lens on the face, next to the name; hover or tap opens the whole photo.
+  // `focus: 45% 17%` in the frontmatter says where the face is.
+  const focus = String(readme.data.focus ?? '').match(/^([\d.]+%) ([\d.]+%)$/);
+  const figure = photo
+    ? html`<figure class="photo" tabindex="0"${focus ? raw(` style="--x: ${focus[1]}; --y: ${focus[2]}"`) : ''}><span class="lens"><img src="${imageUrl(photo)}" alt="${caption}"><figcaption>${caption}</figcaption></span></figure>`
+    : '';
+  const introHtml = toHtml(intro)
+    .replace('<p>', '<p class="lede">')
+    .replace(/<h1>[^]*?<\/h1>/, (h1) => `<div class="who">${h1}${figure}</div>`);
 
   const body = html`
-<div class="intro">
-  <div>${raw(toHtml(intro).replace('<p>', '<p class="lede">'))}</div>
-  ${photo ? html`<figure class="photo"><img src="${imageUrl(photo)}" alt="${caption}"><figcaption>${caption}</figcaption></figure>` : ''}
-</div>
+<div class="intro">${raw(introHtml)}</div>
 ${now && items.length ? html`<h2>now<span class="aside">updated ${now.date ?? ago(now.modified)}</span></h2><div class="now">${items.map((t, i) => html`<div><b>0${i + 1}</b>${raw(toInlineHtml(t))}</div>`)}</div>` : ''}
 ${section('made', made.slice(0, 4), made.length)}
 ${section('notes', notes.slice(0, 3), notes.length)}
