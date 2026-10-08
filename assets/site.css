@@ -88,6 +88,7 @@
 }
 html {
   -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none; /* no rubber-band past the page, like a terminal */
 }
 body {
   background: var(--bg);
