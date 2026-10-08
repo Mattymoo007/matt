@@ -453,6 +453,26 @@ main {
   margin: 18px 0;
   filter: grayscale(1) sepia(0.35) hue-rotate(180deg) saturate(1.4) contrast(1.05);
 }
+/* the blueprint tint for small photos: grayscale, with the accent screened over it */
+.tint {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: var(--bg);
+}
+.tint img {
+  filter: grayscale(1) contrast(1.15);
+  mix-blend-mode: var(--photo-blend);
+}
+.tint::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  mix-blend-mode: screen;
+  opacity: 0.3;
+  pointer-events: none;
+}
 /* the photo: a lens on the face next to the name; hover or tap opens the whole picture */
 .who {
   display: flex;
@@ -480,8 +500,6 @@ main {
   left: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
-  background: var(--bg);
   outline: 1px solid var(--rule);
   transition:
     width 0.35s,
@@ -493,20 +511,9 @@ main {
   margin: 0;
   object-fit: cover;
   object-position: var(--x) var(--y);
-  filter: grayscale(1) contrast(1.15);
-  mix-blend-mode: var(--photo-blend);
   transform-origin: var(--x) var(--y);
   transform: translate(calc(50% - var(--x)), calc(50% - var(--y))) scale(4); /* the face, centred */
   transition: transform 0.35s;
-}
-.photo .lens::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--accent);
-  mix-blend-mode: screen;
-  opacity: 0.3;
-  pointer-events: none;
 }
 .photo figcaption {
   position: absolute;
@@ -530,6 +537,72 @@ main {
 .photo:is(:hover, :focus) figcaption {
   opacity: 1;
   transition-delay: 0.2s;
+}
+
+/* the contact strip (`images:` in the frontmatter): squares the size of the README lens; hover or tap opens the photo underneath */
+.figs {
+  position: relative; /* the open photo is placed against the strip, so it never runs off the page */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 680px;
+  margin-bottom: 28px;
+}
+.figs figure {
+  margin: 0;
+  cursor: zoom-in;
+}
+.figs figure > .tint {
+  width: 48px;
+  height: 48px;
+  outline: 1px solid var(--rule);
+}
+.figs figure:is(:hover, :focus) > .tint {
+  outline-color: var(--accent);
+}
+.figs figure:focus {
+  outline: none; /* the square shows which one is open */
+}
+.preview .figs img {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  object-fit: cover;
+}
+.figs .lens {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 8px);
+  left: 0;
+  max-width: 100%;
+  outline: 1px solid var(--rule);
+  background: var(--bg);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s,
+    visibility 0.2s;
+}
+.preview .figs .lens img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(60vh, 480px);
+}
+.figs figcaption {
+  padding: 6px 10px;
+  font: 11px var(--mono);
+  color: var(--mute);
+  border-top: 1px solid var(--rule);
+}
+.figs figure:is(:hover, :focus) .lens {
+  opacity: 1;
+  visibility: visible;
+}
+.figs:hover figure:not(:hover) .lens {
+  opacity: 0; /* the pointer wins over a clicked one, so only one is ever open */
+  visibility: hidden;
 }
 
 /* ---- home ---- */
@@ -759,6 +832,13 @@ dialog p {
     width: 260px;
     height: 282px;
   }
+  .figs {
+    gap: 6px;
+  }
+  .figs figure > .tint {
+    width: 36px;
+    height: 36px;
+  }
   .now {
     grid-template-columns: 1fr;
   }
@@ -770,7 +850,8 @@ dialog p {
   .bar .cursor {
     animation: none;
   }
-  .photo * {
+  .photo *,
+  .figs * {
     transition: none !important;
   }
 }

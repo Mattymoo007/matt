@@ -10,7 +10,8 @@ const dir = await mkdtemp(join(tmpdir(), 'matt-gate-'));
 const files: Record<string, string> = {
   'README.md': '---\npublish: true\n---\n# Matt\n\nSee [[Hello world]] and [[Secret plan]].\n',
   'hello.md': '---\npublish: true\n---\n# hello\n\n- X: [@me](https://x.com/me)\n',
-  'notes/Hello world.md': '---\ntitle: Hello world\ndate: 2026-10-05\npublish: true\n---\nFirst note. ![[photo.jpg]]\n',
+  'notes/Hello world.md':
+    '---\ntitle: Hello world\ndate: 2026-10-05\npublish: true\nimages:\n  - "[[photo.jpg|A photo]]"\n  - "[[.secret.jpg]]"\n  - missing.jpg\n---\nFirst note. ![[photo.jpg]]\n',
   'notes/Secret plan.md': '---\npublish: false\n---\nSECRET-draft\n',
   'notes/stringy.md': '---\npublish: "true"\n---\nSECRET-string\n',
   'notes/broken.md': '---\npublish: true\n  bad: [yaml\n---\nSECRET-broken\n',
@@ -78,6 +79,16 @@ test('unpublished notes are 404, published ones 200', async () => {
 test('links to private notes become plain text; images embed', async () => {
   assert.match((await get('/README.md', '*/*')).body, /\[Hello world\]\(\/notes\/hello-world\) and Secret plan\./);
   assert.match((await get('/notes/hello-world.md', '*/*')).body, /!\[photo\]\(\/img\/photo\.jpg\)/);
+});
+
+test('images: only shows images from the folder, in a strip under the title', async () => {
+  const { body } = await get('/notes/hello-world');
+  const strip = body.match(/<div class="figs">.*?<\/div>/)?.[0] ?? '';
+  assert.equal(strip.match(/<figure/g)?.length, 1, 'hidden and missing images are skipped');
+  assert.match(strip, /src="\/img\/photo\.jpg" alt="A photo"/);
+  assert.match(strip, /Fig\. 1 · A photo/);
+  assert.match(body, /<h1>Hello world<\/h1>\s*<div class="figs">/);
+  assert.match(body, /<meta property="og:image" content="[^"]*\/img\/photo\.jpg">/);
 });
 
 test('curl gets markdown, browsers get HTML', async () => {

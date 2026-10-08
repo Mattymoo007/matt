@@ -94,6 +94,19 @@ export function findImage(ref: string, images: string[]) {
 
 export const imageUrl = (path: string) => '/' + path.split('/').map(encodeURIComponent).join('/');
 
+export type Figure = { src: string; caption: string };
+
+/** The doc's `images:` list ('[[x.jpg|caption]]' or 'img/x.jpg'), resolved to images in the folder; missing ones are skipped. */
+export function figures(doc: Doc, site: Site): Figure[] {
+  const refs = Array.isArray(doc.data.images) ? doc.data.images : [];
+  return refs.flatMap((r) => {
+    const ref = String(r); // also flattens an unquoted [[x]], which YAML reads as a list
+    const img = findImage(ref, site.images);
+    const caption = ref.match(/\|([^\]]*)/)?.[1]?.trim() ?? '';
+    return img ? [{ src: imageUrl(img), caption }] : [];
+  });
+}
+
 /** The doc's markdown with Obsidian syntax resolved: [[links]] to public docs (plain text otherwise), ![[image]] embeds. */
 export function resolveLinks(doc: Doc, site: Site) {
   const byName = new Map(site.docs.map((d) => [basename(d.file, '.md').toLowerCase(), d]));

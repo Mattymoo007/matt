@@ -1,6 +1,16 @@
 // One function per kind of page. Each builds the preview, then wraps it in the layout.
 import { html, raw } from 'hono/html';
-import { findImage, imageUrl, resolveLinks, toHtml, toInlineHtml, type Doc, type Site } from '../content.ts';
+import {
+  figures,
+  findImage,
+  imageUrl,
+  resolveLinks,
+  toHtml,
+  toInlineHtml,
+  type Doc,
+  type Figure,
+  type Site,
+} from '../content.ts';
 import { layout, type Req } from './layout.ts';
 import { person } from './machines.ts';
 import { ago, aside, baseName, fileName, inDir } from './ls.ts';
@@ -29,7 +39,19 @@ function neighbours(doc: Doc, site: Site) {
   return html`<nav class="term sibs" aria-label="More in ${doc.dir}/"><span class="p">$</span> ls ${doc.dir}/<div><a href="/${doc.dir}">${doc.dir}/ · ${i + 1} of ${docs.length}</a>${link(docs[i - 1], (n) => `← ${n}`)}${link(docs[i + 1], (n) => `${n} →`)}</div></nav>`;
 }
 
+/** `images:` as a contact strip: small tinted squares; hover or tap one and the whole photo opens underneath. */
+const strip = (figs: Figure[]) =>
+  html`<div class="figs">${figs.map(
+    (f, i) =>
+      html`<figure tabindex="0"><span class="tint"><img src="${f.src}" alt="${f.caption}"></span><span class="lens" aria-hidden="true"><span class="tint"><img src="${f.src}" alt=""></span><figcaption>Fig. ${i + 1}${f.caption ? ` · ${f.caption}` : ''}</figcaption></span></figure>`,
+  )}</div>`;
+
 export function filePage(doc: Doc, site: Site, req: Req) {
+  const figs = figures(doc, site);
+  // the strip goes under the title and the parts list, above the text
+  const body = toHtml(docMarkdown(doc, site)).replace(/^<h1>[^]*?<\/h1>\s*(?:<table>[^]*?<\/table>\s*)?/, (head) =>
+    figs.length ? head + strip(figs) : head,
+  );
   return layout(
     {
       path: doc.path,
@@ -38,8 +60,9 @@ export function filePage(doc: Doc, site: Site, req: Req) {
       file: fileName(doc),
       title: `${doc.title} · Matt Bracke`,
       description: describe(doc.body) || doc.title,
-      body: toHtml(docMarkdown(doc, site)) + (doc.dir ? neighbours(doc, site) : ''),
+      body: body + (doc.dir ? neighbours(doc, site) : ''),
       modified: doc.modified,
+      image: figs[0]?.src,
     },
     site,
     req,
@@ -120,7 +143,7 @@ export function homePage(readme: Doc, site: Site, req: Req) {
   // `focus: 45% 17%` in the frontmatter says where the face is.
   const focus = String(readme.data.focus ?? '').match(/^([\d.]+%) ([\d.]+%)$/);
   const figure = photo
-    ? html`<figure class="photo" tabindex="0"${focus ? raw(` style="--x: ${focus[1]}; --y: ${focus[2]}"`) : ''}><span class="lens"><img src="${imageUrl(photo)}" alt="${caption}"><figcaption>${caption}</figcaption></span></figure>`
+    ? html`<figure class="photo" tabindex="0"${focus ? raw(` style="--x: ${focus[1]}; --y: ${focus[2]}"`) : ''}><span class="lens tint"><img src="${imageUrl(photo)}" alt="${caption}"><figcaption>${caption}</figcaption></span></figure>`
     : '';
   const introHtml = toHtml(intro)
     .replace('<p>', '<p class="lede">')
