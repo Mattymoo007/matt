@@ -25,8 +25,8 @@ function neighbours(doc: Doc, site: Site) {
   if (docs.length < 2) return '';
   const i = docs.indexOf(doc);
   const link = (d: Doc | undefined, label: (name: string) => string) =>
-    d ? html`<a href="/${d.path}">${label(baseName(d))}</a>` : html`<span></span>`;
-  return html`<nav class="term sibs" aria-label="More in ${doc.dir}/"><span class="p">$</span> ls ${doc.dir}/<div>${link(docs[i - 1], (n) => `← ${n}`)}<a href="/${doc.dir}">${doc.dir}/ · ${i + 1} of ${docs.length}</a>${link(docs[i + 1], (n) => `${n} →`)}</div></nav>`;
+    d ? html`<a href="/${d.path}">${label(baseName(d))}</a>` : '';
+  return html`<nav class="term sibs" aria-label="More in ${doc.dir}/"><span class="p">$</span> ls ${doc.dir}/<div><a href="/${doc.dir}">${doc.dir}/ · ${i + 1} of ${docs.length}</a>${link(docs[i - 1], (n) => `← ${n}`)}${link(docs[i + 1], (n) => `${n} →`)}</div></nav>`;
 }
 
 export function filePage(doc: Doc, site: Site, req: Req) {
