@@ -14,6 +14,7 @@
 :root {
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: 'Inter Tight', system-ui, sans-serif;
+  --measure: 760px; /* the reading column: headings, text and photos on every page */
 }
 
 /* ---- themes: every colour is a token. Day is the default; night and synthwave '84 override it. ---- */
@@ -278,13 +279,13 @@ main {
   font: 17px/1.6 var(--sans);
   min-width: 0;
 }
-/* blocks fill the pane like a terminal (capped for ultrawide screens); running text keeps a readable measure */
+/* blocks fill the pane like a terminal (capped for ultrawide screens); headings and running text share one readable measure */
 .preview > * {
   max-width: 1400px;
 }
-.preview > :is(p, ul:not(.list), ol, blockquote, .door),
+.preview > :is(h1, h2, h3, h4, p, ul:not(.list), ol, blockquote, .door, .figs),
 .preview .lede {
-  max-width: 680px;
+  max-width: var(--measure);
 }
 .preview .file {
   font: 11px var(--mono);
@@ -537,7 +538,6 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  max-width: 680px;
   margin-bottom: 28px;
 }
 .figs figure {
