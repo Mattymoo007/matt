@@ -16,4 +16,5 @@ RUN pnpm install --frozen-lockfile --prod
 COPY --from=verify /app/src ./src
 COPY --from=verify /app/assets ./assets
 EXPOSE 3000
+USER node
 CMD ["node", "src/server.ts"]
