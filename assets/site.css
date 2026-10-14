@@ -517,9 +517,6 @@ main {
   overflow: hidden;
   background: var(--bg);
   outline: 1px solid var(--rule);
-  transition:
-    width 0.35s,
-    height 0.35s;
 }
 .photo img {
   width: 100%;
@@ -531,7 +528,6 @@ main {
   mix-blend-mode: var(--photo-blend);
   transform-origin: var(--x) var(--y);
   transform: translate(calc(50% - var(--x)), calc(50% - var(--y))) scale(4); /* the face, centred */
-  transition: transform 0.35s;
 }
 .photo .lens::after {
   content: ''; /* the accent, screened over the grayscale */
@@ -551,8 +547,7 @@ main {
   color: var(--mute);
   background: var(--bg);
   border-top: 1px solid var(--rule);
-  opacity: 0;
-  transition: opacity 0.2s;
+  visibility: hidden;
 }
 .photo:is(:hover, :focus) .lens {
   width: 300px;
@@ -562,8 +557,7 @@ main {
   transform: none;
 }
 .photo:is(:hover, :focus) figcaption {
-  opacity: 1;
-  transition-delay: 0.2s;
+  visibility: visible;
 }
 
 /* the contact strip (`images:` in the frontmatter): squares the size of the README lens; hover or tap opens the photo underneath */
@@ -601,12 +595,8 @@ main {
   max-width: 100%;
   outline: 1px solid var(--rule);
   background: var(--bg);
-  opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition:
-    opacity 0.2s,
-    visibility 0.2s;
 }
 .preview .figs .lens img {
   width: auto;
@@ -621,7 +611,6 @@ main {
   border-top: 1px solid var(--rule);
 }
 .figs figure:is(:hover, :focus) .lens {
-  opacity: 1;
   visibility: visible;
 }
 .figs:hover figure:not(:hover) .lens {
@@ -876,10 +865,6 @@ dialog p {
 @media (prefers-reduced-motion: reduce) {
   .cursor {
     animation: none;
-  }
-  .photo *,
-  .figs * {
-    transition: none !important;
   }
 }
 
