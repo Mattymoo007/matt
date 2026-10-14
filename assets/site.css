@@ -230,6 +230,7 @@ main {
   display: grid;
   grid-template-columns: 92px 1fr auto;
   gap: 12px;
+  align-items: baseline; /* the smaller meta sits on the same line as the name */
   padding: 7px 24px;
   text-decoration: none;
 }
