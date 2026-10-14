@@ -327,12 +327,24 @@ main {
   font-weight: 400;
 }
 .preview h2 {
-  font: 500 12px var(--mono);
-  margin: 40px 0 12px;
+  font: 500 24px/1.25 var(--mono);
+  letter-spacing: -0.02em;
+  margin: 48px 0 14px;
+  padding-left: 3ch; /* the ## hangs in its own column, like the h1's # */
 }
 .preview h2::before {
-  content: '## ';
+  content: '##';
+  display: inline-block;
+  width: 3ch;
+  margin-left: -3ch;
   color: var(--mark);
+  font-weight: 400;
+}
+/* on the home page the h2s are small labels over each block, not headings in a text */
+.preview[data-kind='home'] h2 {
+  font: 500 12px var(--mono);
+  letter-spacing: 0;
+  margin: 40px 0 12px;
 }
 .preview h2 .aside {
   color: var(--mute);
@@ -340,9 +352,10 @@ main {
   margin-left: 8px;
 }
 .preview h3 {
-  font-size: 17px;
-  font-weight: 500;
-  margin: 24px 0 6px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 32px 0 8px;
 }
 .preview p,
 .preview ul,
@@ -810,6 +823,9 @@ dialog p {
   }
   .preview h1 {
     font-size: 38px;
+  }
+  .preview h2 {
+    font-size: 20px;
   }
   .preview .lede {
     font-size: 19px;

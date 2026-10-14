@@ -114,7 +114,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
           html`<a class="row" href="/${m.path}"><span class="perm">-r--r--r--</span><span class="name">${m.path}</span><span class="meta">${m.meta}</span></a>`,
       )}
     </div></nav>
-    <article class="preview">
+    <article class="preview" data-kind="${p.kind}">
       <div class="file">${crumbs(p.file)}<span class="grow"></span>${p.modified ? html`<span>modified ${p.modified.toISOString().slice(0, 10)}</span>` : ''}${hasRaw ? html`<a href="${rawHref}" title="This page as markdown">raw</a>` : ''}</div>
       ${raw(p.body)}
     </article>
