@@ -316,9 +316,13 @@ main {
   letter-spacing: -0.035em;
   line-height: 1.02;
   margin-bottom: 20px;
+  padding-left: 0.75em; /* the # hangs in its own column, so wrapped lines align with the first */
 }
 .preview h1::before {
-  content: '# ';
+  content: '#';
+  display: inline-block;
+  width: 0.75em;
+  margin-left: -0.75em;
   color: var(--mark);
   font-weight: 400;
 }
