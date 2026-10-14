@@ -150,13 +150,7 @@ a:hover {
   display: none;
 }
 .bar .cursor {
-  display: inline-block;
-  width: 8px;
-  height: 15px;
-  background: var(--ink);
-  vertical-align: -2px;
   margin-left: 4px;
-  animation: blink 1s steps(1) infinite;
 }
 .bar .hint {
   color: var(--mute);
@@ -166,6 +160,15 @@ a:hover {
 .bar .hint b {
   color: var(--ink);
   font-weight: 500;
+}
+/* the one cursor: in the prompt, and behind text typing itself out live. Sized in em, so it fits any text */
+.cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.15em;
+  background: var(--ink);
+  vertical-align: -0.15em;
+  animation: blink 1s steps(1) infinite;
 }
 @keyframes blink {
   50% {
@@ -256,6 +259,19 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.draft {
+  color: var(--mute);
+  pointer-events: none; /* being written: nothing to open yet */
+}
+/* a note I'm writing right now, and its folder: the row says so until I pause */
+.row.writing .meta {
+  display: none;
+}
+.row.writing::after {
+  content: 'writing…';
+  color: var(--accent);
+  font-size: 11px;
 }
 .row.leaf i {
   font-style: normal;
@@ -857,7 +873,7 @@ dialog p {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bar .cursor {
+  .cursor {
     animation: none;
   }
   .photo *,

@@ -4,10 +4,12 @@ import { extname, join } from 'node:path';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono, type Context } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import { CONTENT_DIR, isImage, load, type Doc, type Site } from './content.ts';
+import { onChange, watchFolder } from './live.ts';
 import type { Req } from './views/layout.ts';
 import { llmsFull, llmsTxt, robots, rss, sitemap } from './views/machines.ts';
-import { dirPage, filePage, homePage, missingPage } from './views/pages.ts';
+import { dirPage, fileBody, filePage, homePage, missingPage } from './views/pages.ts';
 import { dirText, docMarkdown, homeText } from './views/text.ts';
 
 // Shown until README.md in the folder is published.
@@ -61,6 +63,38 @@ app.get('/rss.xml', machine('application/rss+xml', rss));
 app.get('/sitemap.xml', machine('application/xml', sitemap));
 app.get('/robots.txt', (c) => c.text(robots(request(c).origin)));
 
+// Writing in public: every open page hears which notes I'm writing, and a note's page gets its new text once I pause.
+app.get('/live/*', async (c) => {
+  const path = decodeURIComponent(c.req.path).replace(/^\/live\/?|\/+$/g, '');
+  const { docs } = await load();
+  if (path && !docs.some((d) => d.path === path || d.dir === path)) return c.text('not found\n', 404);
+  const body = async () => {
+    const site = await load();
+    const doc = site.docs.find((d) => d.path === path);
+    return doc ? fileBody(doc, site) : '';
+  };
+  let last = await body();
+  c.header('x-accel-buffering', 'no'); // nginx would hold the stream back
+  return streamSSE(c, async (stream) => {
+    const stop = onChange(async ({ event, files }) => {
+      if (event === 'writing') {
+        // only notes the site may name: published ones and drafts
+        const { docs, drafts } = await load();
+        const paths = [...docs, ...drafts].filter((d) => files.includes(d.file)).map((d) => d.path);
+        if (paths.length) await stream.writeSSE({ event, data: paths.join('\n') });
+      } else {
+        const next = await body();
+        await stream.writeSSE({ event, data: next === last ? '' : (last = next) }); // the new text, if this page's changed
+      }
+    });
+    stream.onAbort(stop);
+    while (!stream.aborted) {
+      await stream.sleep(30_000);
+      await stream.write(': still here\n\n'); // keeps proxies from closing a quiet stream
+    }
+  });
+});
+
 app.get('*', async (c) => {
   const site = await load();
   let path = decodeURIComponent(c.req.path).replace(/^\/+|\/+$/g, '');
@@ -91,6 +125,7 @@ app.get('*', async (c) => {
 });
 
 if (import.meta.main) {
+  watchFolder();
   const port = Number(process.env.PORT ?? 3000);
   serve({ fetch: app.fetch, port }, () => console.log(`~/matt listening on :${port}, reading ${CONTENT_DIR}`));
 }

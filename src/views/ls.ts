@@ -9,8 +9,8 @@ const rank = (path: string) => (ORDER.includes(path) ? ORDER.indexOf(path) : ORD
 
 export type Row = { path: string; perm: string; name: string; meta: string; dir: boolean };
 
-export const fileName = (d: Doc) => `${d.path || 'README'}.md`;
-export const baseName = (d: Doc) => fileName(d).split('/').pop()!; // 'made/stickit.md' → 'stickit.md'
+export const fileName = (d: Pick<Doc, 'path'>) => `${d.path || 'README'}.md`;
+export const baseName = (d: Pick<Doc, 'path'>) => fileName(d).split('/').pop()!; // 'made/stickit.md' → 'stickit.md'
 
 export function ago(date: Date) {
   const s = (Date.now() - +date) / 1000;
@@ -20,7 +20,7 @@ export function ago(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export const inDir = (docs: Doc[], dir: string) => docs.filter((d) => d.dir === dir);
+export const inDir = <T extends { dir: string }>(docs: T[], dir: string) => docs.filter((d) => d.dir === dir);
 
 /** Every doc in reading order: README, now, then each folder (newest first), then hello. */
 export const ordered = (docs: Doc[]) => [...docs].sort((a, b) => rank(a.dir || a.path) - rank(b.dir || b.path));

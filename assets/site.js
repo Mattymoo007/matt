@@ -110,7 +110,7 @@ input.addEventListener('keydown', (e) => {
 });
 
 // ---- keys ----
-const rows = [...document.querySelectorAll('.ls .row')];
+const rows = [...document.querySelectorAll('.ls a.row')]; // drafts can't be opened, so j/k skips them
 let pos = rows.findIndex((r) => r.classList.contains('active'));
 function move(d) {
   rows[pos]?.classList.remove('focus');
@@ -156,6 +156,92 @@ function setTheme(name) {
 const nextTheme = () => THEMES[(THEMES.indexOf(root.dataset.theme) + 1) % THEMES.length];
 $('.status .theme').addEventListener('click', () => setTheme(nextTheme()));
 syncThemeColor();
+
+// ---- live: watch me write. A note I'm writing says so in the list; once I pause, its page types out what's new. ----
+if (!document.body.classList.contains('page-missing')) {
+  const article = $('.preview');
+  let finish = () => {};
+  const live = new EventSource(`/live/${here}`);
+  live.addEventListener('writing', (e) => {
+    for (const p of e.data.split('\n'))
+      document
+        .querySelectorAll(`.ls [data-path="${p}"], .ls [data-path="${p.split('/')[0]}"]`) // the note, and its folder
+        .forEach((row) => row.classList.add('writing'));
+  });
+  live.addEventListener('saved', (e) => {
+    document.querySelectorAll('.ls .writing').forEach((row) => row.classList.remove('writing'));
+    if (!e.data) return; // something else changed, not this page
+    finish(); // a new save while the last one is still typing: show that one whole first
+    const next = document.createElement('template');
+    next.innerHTML = e.data;
+    const old = [...article.children].filter((el) => !el.matches('.file, .sibs'));
+    const fresh = [...next.content.children];
+    let i = 0;
+    while (i < old.length && i < fresh.length && old[i].isEqualNode(fresh[i])) i++; // unchanged blocks stay put
+    const before = old
+      .slice(i)
+      .map((b) => b.textContent)
+      .join('');
+    old.slice(i).forEach((b) => b.remove());
+    fresh.slice(i).forEach((b) => article.insertBefore(b, $('.sibs')));
+    finish = type(fresh.slice(i), before);
+  });
+}
+
+/** Types out what changed in `blocks` letter by letter; text they share with `before`, at the start or the end, shows at once. Returns a function that finishes it now. */
+function type(blocks, before) {
+  const parts = [];
+  const starts = []; // where each block's text begins
+  let at = 0;
+  for (const block of blocks) {
+    starts.push(at);
+    const walk = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    while (walk.nextNode()) {
+      const node = walk.currentNode;
+      parts.push({ node, text: node.data, at, rest: document.createTextNode('') }); // rest: the unchanged end, after the cursor
+      at += node.data.length;
+    }
+  }
+  const text = parts.map((p) => p.text).join('');
+  let shown = 0; // typed so far: everything before this is on screen
+  while (shown < before.length && before[shown] === text[shown]) shown++;
+  let tail = 0;
+  while (tail < before.length - shown && tail < text.length - shown && before.at(-1 - tail) === text.at(-1 - tail))
+    tail++;
+  const end = text.length - tail; // and everything from here on, too
+  if (shown >= end || matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  for (const p of parts) p.node.after(p.rest);
+  const draw = () => {
+    cursor.remove();
+    for (const p of parts) {
+      p.node.data = p.text.slice(0, Math.max(0, shown - p.at));
+      p.rest.data = p.text.slice(Math.max(p.node.data.length, end - p.at));
+      if (shown >= p.at && shown <= p.at + p.text.length && !cursor.isConnected) p.node.after(cursor);
+    }
+    // a block waits its turn until the typing reaches it
+    blocks.forEach((b, i) =>
+      starts[i] <= shown || starts[i] >= end ? b.removeAttribute('style') : (b.style.display = 'none'),
+    );
+  };
+  const step = Math.ceil((end - shown) / 120); // ~30 letters a second; a long paste still takes under 4 seconds
+  const timer = setInterval(() => {
+    shown = Math.min(end, shown + step);
+    draw();
+    if (shown < end) return;
+    clearInterval(timer);
+    setTimeout(() => cursor.remove(), 4_000); // the cursor lingers a moment, as if I'm still thinking
+  }, 30);
+  draw();
+  return () => {
+    clearInterval(timer);
+    cursor.remove();
+    for (const p of parts) ((p.node.data = p.text), p.rest.remove());
+    for (const b of blocks) b.removeAttribute('style');
+  };
+}
 
 // ---- clock: what time it is where I am ----
 const clock = $('.clock');

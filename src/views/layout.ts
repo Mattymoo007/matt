@@ -60,13 +60,15 @@ export function layout(p: Page, site: Site, req: Req) {
     ...site.docs.map((d) => ({ p: d.path, t: d.title, d: d.dir })),
     ...SECTIONS.filter((s) => site.docs.some((d) => d.dir === s)).map((s) => ({ p: s, t: `${s}/`, d: s })),
   ];
-  // the folder you're in unfolds, like `tree`
+  // the folder you're in unfolds, like `tree`; drafts come first and can't be opened yet
   const tree = (dir: string) => {
-    const docs = inDir(site.docs, dir);
-    return docs.map(
-      (d, i) =>
-        html`<a class="row leaf${d.path === p.path ? ' active' : ''}" href="/${d.path}"><span class="perm"></span><span class="name"><i>${i === docs.length - 1 ? '└──' : '├──'}</i>${baseName(d)}</span></a>`,
-    );
+    const leaves = [...inDir(site.drafts, dir), ...inDir(site.docs, dir)];
+    return leaves.map((d, i) => {
+      const name = html`<span class="perm"></span><span class="name"><i>${i === leaves.length - 1 ? '└──' : '├──'}</i>${baseName(d)}</span>`;
+      return 'body' in d
+        ? html`<a class="row leaf${d.path === p.path ? ' active' : ''}" href="/${d.path}" data-path="${d.path}">${name}</a>`
+        : html`<span class="row leaf draft" data-path="${d.path}">${name}<span class="meta">draft</span></span>`;
+    });
   };
 
   return html`<!doctype html>
@@ -106,7 +108,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
       <div class="cmd">total ${site.docs.length}${newest ? ` · last write ${ago(newest)}` : ''}</div>
       ${listing(site.docs).map(
         (r) =>
-          html`<a class="row${r.dir ? ' dir' : ''}${r.path === p.path ? ' active' : r.path === cwd ? ' open' : ''}" href="/${r.path}"><span class="perm">${r.perm}</span><span class="name">${r.name}</span><span class="meta">${r.meta}</span></a>${r.dir && r.path === cwd ? tree(r.path) : ''}`,
+          html`<a class="row${r.dir ? ' dir' : ''}${r.path === p.path ? ' active' : r.path === cwd ? ' open' : ''}" href="/${r.path}" data-path="${r.path}"><span class="perm">${r.perm}</span><span class="name">${r.name}</span><span class="meta">${r.meta}</span></a>${r.dir && r.path === cwd ? tree(r.path) : ''}`,
       )}
       <div class="group">for machines</div>
       ${MACHINES.map(

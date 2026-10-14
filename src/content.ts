@@ -18,8 +18,11 @@ export type Doc = {
   modified: Date;
 };
 
-/** A snapshot of the folder: published docs (newest first) and every image. */
-export type Site = { docs: Doc[]; images: string[] };
+/** A note being written (`publish: draft`): its name shows, its text never leaves the folder. */
+export type Draft = Pick<Doc, 'path' | 'file' | 'dir' | 'title' | 'modified'>;
+
+/** A snapshot of the folder: published docs (newest first), drafts and every image. */
+export type Site = { docs: Doc[]; drafts: Draft[]; images: string[] };
 
 const IMAGE = /\.(jpe?g|png|webp|gif|svg|avif)$/i;
 export const isImage = (path: string) => IMAGE.test(path);
@@ -38,25 +41,28 @@ function splitFrontmatter(src: string) {
   return { data: (parse(m[1]) ?? {}) as Record<string, unknown>, body: src.slice(m[0].length) };
 }
 
-async function readDoc(file: string): Promise<Doc | undefined> {
+async function readDoc(file: string): Promise<Doc | Draft | undefined> {
   const abs = join(CONTENT_DIR, file);
   try {
     const { data, body } = splitFrontmatter(await readFile(abs, 'utf8'));
-    // The gate: only `publish: true` (a real boolean) ever leaves the folder.
-    if (data.publish !== true) return;
+    // The gate: only `publish: true` (a real boolean) ever leaves the folder. `publish: draft` shows the name only.
+    if (data.publish !== true && data.publish !== 'draft') return;
     const dir = dirname(file) === '.' ? '' : dirname(file);
     const name = basename(file, '.md');
     const slug = name === 'README' && !dir ? '' : slugify(name);
+    const path = [dir, slug].filter(Boolean).join('/');
+    const modified = (await stat(abs)).mtime;
+    if (data.publish === 'draft') return { path, file, dir, title: String(data.title ?? name), modified };
     const date = data.date ?? data.updated ?? data.year;
     return {
-      path: [dir, slug].filter(Boolean).join('/'),
+      path,
       file,
       dir,
       title: String(data.title ?? body.match(/^#\s+(.+)$/m)?.[1] ?? name),
       date: date == null ? undefined : String(date),
       data,
       body,
-      modified: (await stat(abs)).mtime,
+      modified,
     };
   } catch {
     return; // unreadable or broken frontmatter → treated as unpublished
@@ -64,6 +70,9 @@ async function readDoc(file: string): Promise<Doc | undefined> {
 }
 
 let cache: (Site & { at: number }) | undefined;
+
+/** Forgets the snapshot, so the next load() reads the folder again (live.ts calls this when the folder changes). */
+export const invalidate = () => (cache = undefined);
 
 /** Reads the folder at most every 5 seconds. Hidden files and folders don't exist as far as the site knows. */
 export async function load(): Promise<Site> {
@@ -73,9 +82,11 @@ export async function load(): Promise<Site> {
     .filter((e) => e.isFile())
     .map((e) => relative(CONTENT_DIR, join(e.parentPath, e.name)))
     .filter((f) => !f.split('/').some((part) => part.startsWith('.')));
-  const docs = (await Promise.all(files.filter((f) => f.endsWith('.md')).map(readDoc))).filter((d) => d !== undefined);
+  const read = (await Promise.all(files.filter((f) => f.endsWith('.md')).map(readDoc))).filter((r) => r !== undefined);
+  const docs = read.filter((r) => 'body' in r);
+  const drafts = read.filter((r) => !('body' in r));
   docs.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || +b.modified - +a.modified);
-  cache = { at: Date.now(), docs, images: files.filter(isImage) };
+  cache = { at: Date.now(), docs, drafts, images: files.filter(isImage) };
   return cache;
 }
 

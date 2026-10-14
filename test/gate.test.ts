@@ -13,6 +13,7 @@ const files: Record<string, string> = {
   'notes/Hello world.md':
     '---\ntitle: Hello world\ndate: 2026-10-05\npublish: true\nimages:\n  - "[[photo.jpg|A photo]]"\n  - "[[.secret.jpg]]"\n  - missing.jpg\n---\nFirst note. ![[photo.jpg]]\n',
   'notes/Secret plan.md': '---\npublish: false\n---\nSECRET-draft\n',
+  'notes/Writing now.md': '---\ntitle: Work in progress\npublish: draft\n---\nSECRET-draft-text\n',
   'notes/stringy.md': '---\npublish: "true"\n---\nSECRET-string\n',
   'notes/broken.md': '---\npublish: true\n  bad: [yaml\n---\nSECRET-broken\n',
   'notes/nofm.md': 'SECRET-no-frontmatter\n',
@@ -41,6 +42,24 @@ test('only publish: true (a real boolean) is loaded', async () => {
   assert.deepEqual(images, ['img/photo.jpg']);
 });
 
+test('publish: draft shows the name as a draft, never the text', async () => {
+  const { drafts } = await load();
+  assert.deepEqual(
+    drafts.map((d) => d.path),
+    ['notes/writing-now'],
+  );
+  assert.ok(!('body' in drafts[0]), 'a draft carries no text');
+  for (const path of ['/notes', '/notes/hello-world']) {
+    const { body } = await get(path);
+    assert.match(
+      body,
+      /Work in progress<span>draft<\/span>|writing-now\.md<\/span><span class="meta">draft</,
+      `${path} doesn't show the draft`,
+    );
+    assert.ok(!body.includes('href="/notes/writing-now"'), `${path} links to the draft`);
+  }
+});
+
 test('nothing private is reachable, as HTML or as markdown', async () => {
   const paths = [
     '/',
@@ -53,6 +72,10 @@ test('nothing private is reachable, as HTML or as markdown', async () => {
     '/notes/stringy',
     '/notes/broken',
     '/notes/nofm',
+    '/notes/writing-now',
+    '/notes/writing-now.md',
+    '/live/notes/writing-now',
+    '/live/notes/secret-plan',
     '/.hidden/leak',
     '/.hidden/leak.md',
     '/.secret.jpg',
@@ -69,7 +92,16 @@ test('nothing private is reachable, as HTML or as markdown', async () => {
 });
 
 test('unpublished notes are 404, published ones 200', async () => {
-  for (const path of ['/notes/secret-plan', '/notes/stringy', '/notes/broken', '/notes/nofm', '/.secret.jpg']) {
+  for (const path of [
+    '/notes/secret-plan',
+    '/notes/stringy',
+    '/notes/broken',
+    '/notes/nofm',
+    '/notes/writing-now',
+    '/live/notes/writing-now',
+    '/live/notes/secret-plan',
+    '/.secret.jpg',
+  ]) {
     assert.equal((await get(path)).status, 404, path);
   }
   for (const path of ['/', '/notes', '/notes/hello-world', '/img/photo.jpg'])
@@ -103,7 +135,7 @@ test('machine files list published docs only', async () => {
     const { status, body } = await get(path, '*/*');
     assert.equal(status, 200, path);
     assert.match(body, /hello-world/, `${path} misses a published note`);
-    for (const slug of ['secret-plan', 'stringy', 'broken', 'nofm', 'leak'])
+    for (const slug of ['secret-plan', 'writing-now', 'stringy', 'broken', 'nofm', 'leak'])
       assert.ok(!body.includes(slug), `${path} lists ${slug}`);
   }
 });

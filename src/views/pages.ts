@@ -8,6 +8,7 @@ import {
   toHtml,
   toInlineHtml,
   type Doc,
+  type Draft,
   type Figure,
   type Site,
 } from '../content.ts';
@@ -23,8 +24,8 @@ const BLURB: Record<string, string> = {
   crew: 'The agents I work with.',
 };
 
-const list = (docs: Doc[], withSummary = false) =>
-  html`<ul class="list">${docs.map(
+const list = (docs: Doc[], withSummary = false, drafts: Draft[] = []) =>
+  html`<ul class="list">${drafts.map((d) => html`<li class="draft">${d.title}<span>draft</span></li>`)}${docs.map(
     (d) =>
       html`<li><a href="/${d.path}">${d.title}</a><span>${aside(d)}</span>${withSummary ? html`<small>${describe(d.body)}</small>` : ''}</li>`,
   )}</ul>`;
@@ -46,12 +47,18 @@ const strip = (figs: Figure[]) =>
       html`<figure tabindex="0"><img src="${f.src}" alt="${f.caption}"><span class="lens" aria-hidden="true"><img src="${f.src}" alt=""><figcaption>Fig. ${i + 1}${f.caption ? ` · ${f.caption}` : ''}</figcaption></span></figure>`,
   )}</div>`;
 
-export function filePage(doc: Doc, site: Site, req: Req) {
+/** A file's text as HTML: the page shows it, and /live sends it again when it changes. */
+export function fileBody(doc: Doc, site: Site) {
   const figs = figures(doc, site);
   // the strip goes under the title and the parts list, above the text
-  const body = toHtml(docMarkdown(doc, site)).replace(/^<h1>[^]*?<\/h1>\s*(?:<table>[^]*?<\/table>\s*)?/, (head) =>
+  return toHtml(docMarkdown(doc, site)).replace(/^<h1>[^]*?<\/h1>\s*(?:<table>[^]*?<\/table>\s*)?/, (head) =>
     figs.length ? head + strip(figs) : head,
   );
+}
+
+export function filePage(doc: Doc, site: Site, req: Req) {
+  const figs = figures(doc, site);
+  const body = fileBody(doc, site);
   return layout(
     {
       path: doc.path,
@@ -70,7 +77,7 @@ export function filePage(doc: Doc, site: Site, req: Req) {
 }
 
 export function dirPage(dir: string, site: Site, req: Req) {
-  const body = html`<h1>${dir}/</h1>${BLURB[dir] ? html`<p class="blurb">${BLURB[dir]}</p>` : ''}${list(inDir(site.docs, dir), dir !== 'notes')}`;
+  const body = html`<h1>${dir}/</h1>${BLURB[dir] ? html`<p class="blurb">${BLURB[dir]}</p>` : ''}${list(inDir(site.docs, dir), dir !== 'notes', inDir(site.drafts, dir))}`;
   const title = `${dir}/ · Matt Bracke`;
   return layout(
     {

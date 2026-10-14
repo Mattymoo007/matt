@@ -5,11 +5,13 @@ The source of [matthewbracke.com](https://matthewbracke.com): a tiny [Hono](http
 - **The folder** is the `Public/` folder of my Obsidian vault, mirrored to the server and mounted read-only. Only notes with `publish: true` are ever served; everything else doesn't exist as far as the site knows.
 - **No build, no redeploy for content.** Write in Obsidian, flip `publish`, it's live.
 - **Every page is also markdown**: `curl matthewbracke.com`, or add `.md` to any URL.
+- **Writing in public.** While I edit a note, its row says `writing…`; when I pause, its open page types out what's new, letter by letter. `publish: draft` lists a note without its text or a link.
 
 ```
 src/
   content.ts        the folder: scan, publish gate, [[wikilinks]], images
-  server.ts         routes
+  live.ts           watches the folder: `writing` as a note changes, `saved` once I pause
+  server.ts         routes (+ /live, the stream for open pages)
   views/
     ls.ts           the file listing (shared by HTML and text)
     text.ts         markdown for curl and agents
