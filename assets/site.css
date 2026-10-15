@@ -725,6 +725,35 @@ main {
   border: 0;
 }
 
+/* ---- zen: just the text. The prompt stays, so the way back is always there; phones are focused enough already ---- */
+.bar .zen {
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.bar .zen::after {
+  content: 'zen';
+}
+[data-zen] .bar .zen::after {
+  content: 'exit zen';
+}
+@media (min-width: 761px) {
+  [data-zen] main {
+    grid-template-columns: 1fr;
+  }
+  [data-zen] :is(.ls, .status) {
+    display: none;
+  }
+  [data-zen] .preview {
+    justify-self: center;
+    width: 100%;
+    max-width: calc(var(--measure) + 128px); /* the reading column and its padding */
+  }
+}
+
 /* ---- help ---- */
 dialog {
   margin: auto;

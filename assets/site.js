@@ -65,6 +65,7 @@ const commands = {
   clear: () => '',
   ask: () =>
     'My copy is still learning to talk. Soon you can ask it anything.\nUntil then: <a href="/now">cat now.md</a> · <a href="/hello">cat hello.md</a>',
+  zen: () => (zen(), ''),
   theme: (a) => {
     const name = a ? THEMES.find((t) => t.startsWith(a.trim().toLowerCase())) : nextTheme();
     if (!name) return `theme: ${esc(a)}: try ${THEMES.join(' · ')}`;
@@ -126,6 +127,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && rows[pos]?.classList.contains('focus')) return rows[pos].click();
   if ((e.key === '-' || e.key === 'h') && here) return go(here.includes('/') ? here.split('/')[0] : ''); // up a folder
   if (e.key === '?') return (e.preventDefault(), help.showModal());
+  if (e.key === 'z') return zen();
+  if (e.key === 'Escape' && 'zen' in root.dataset) return zen(false);
   if (e.key === '/' || e.key === ':') return (e.preventDefault(), input.focus());
   if (e.key.length === 1 && /\S/.test(e.key)) {
     // just start typing: the prompt catches it
@@ -156,6 +159,15 @@ function setTheme(name) {
 const nextTheme = () => THEMES[(THEMES.indexOf(root.dataset.theme) + 1) % THEMES.length];
 $('.status .theme').addEventListener('click', () => setTheme(nextTheme()));
 syncThemeColor();
+
+// ---- zen: just the text, on wide screens. Remembered on this device, like the theme. ----
+function zen(on = !('zen' in root.dataset)) {
+  root.toggleAttribute('data-zen', on);
+  try {
+    on ? (localStorage.zen = 1) : localStorage.removeItem('zen');
+  } catch {}
+}
+$('.bar .zen').addEventListener('click', () => zen());
 
 // ---- live: watch me write. A note I'm writing says so in the list; once I pause, its page types out what's new. ----
 if (!document.body.classList.contains('page-missing')) {

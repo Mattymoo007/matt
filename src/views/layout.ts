@@ -45,8 +45,8 @@ function crumbs(path: string) {
   return html`<span class="crumbs"><a href="/">~/matt</a>${parts.map((d, i) => html`/<a href="/${parts.slice(0, i + 1).join('/')}">${d}</a>`)}${last ? `/${last}` : ''}</span>`;
 }
 
-// Runs before the first paint so a saved theme never flashes: the visitor's choice, else their system's light or dark.
-const THEME = `{let t;try{t=localStorage.theme}catch{}document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'night':'day')}`;
+// Runs before the first paint so a saved theme or zen never flashes: the visitor's choice, else their system's light or dark.
+const PREFS = `{const d=document.documentElement;let t,z;try{t=localStorage.theme;z=localStorage.zen}catch{}d.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'night':'day');if(z)d.dataset.zen=''}`;
 
 export function layout(p: Page, site: Site, req: Req) {
   const newest = site.docs.reduce<Date | undefined>((n, d) => (!n || d.modified > n ? d.modified : n), undefined);
@@ -84,7 +84,7 @@ export function layout(p: Page, site: Site, req: Req) {
 <meta property="og:type" content="${p.kind === 'file' ? 'article' : 'website'}">
 ${p.image ? html`<meta property="og:image" content="${req.origin}${p.image}"><meta name="twitter:card" content="summary_large_image">` : ''}
 <meta name="theme-color" content="#f7f6f2">
-<script>${raw(THEME)}</script>
+<script>${raw(PREFS)}</script>
 <link rel="icon" href="${FAVICON}">
 ${hasRaw ? html`<link rel="alternate" type="text/markdown" href="${rawHref}">` : ''}
 <link rel="alternate" type="application/rss+xml" title="Matt Bracke" href="/rss.xml">
@@ -100,7 +100,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
   <form class="bar" role="search" autocomplete="off">
     <label for="prompt">matt@earth:<b>${crumbs(cwd ? `${cwd}/` : '')}</b> $</label>
     <span class="field"><input id="prompt" name="q" placeholder=" " spellcheck="false" autocapitalize="off" aria-label="Type a command, or search"><span class="ghost" aria-hidden="true">${p.cmd}<span class="cursor"></span></span></span>
-    <span class="hint">type a command · <b>?</b> help</span>
+    <span class="hint">type a command · <b>?</b> help · <button class="zen" type="button" title="Zen: just the text (z)"></button></span>
     <div class="out" hidden aria-live="polite"></div>
   </form>
   <main>
@@ -133,6 +133,7 @@ ${p.jsonLd ? html`<script type="application/ld+json">${raw(json(p.jsonLd))}</scr
         <dt>- / h</dt><dd>up a folder</dd>
         <dt>/</dt><dd>focus the prompt (or just start typing)</dd>
         <dt>esc</dt><dd>close the prompt</dd>
+        <dt>z</dt><dd>zen: just the text · z or esc to leave</dd>
         <dt>theme [name]</dt><dd>day · night · synthwave · or click the bottom-left corner</dd>
       </dl>
       <p>Every page is also markdown: add .md to the url, or curl it.<br>esc closes this.</p>
