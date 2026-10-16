@@ -22,9 +22,9 @@ export function lsText(site: Site, dir = '') {
       ...listing(site.docs).map((r) => row(r.perm, `${r.name}${r.dir ? '/' : ''}`, r.meta)),
       ...MACHINES.map((m) => row('-r--r--r--', m.path, m.meta)),
     ].join('\n');
-  return inDir(site.docs, dir)
-    .map((d) => `${(d.date ?? '').padEnd(12)}${d.path}.md  ${d.title}`)
-    .join('\n');
+  const docs = inDir(site.docs, dir);
+  const width = Math.max(...docs.map((d) => d.path.length)) + 6; // '/' + '.md' + two spaces
+  return docs.map((d) => `${(d.date ?? '').padEnd(12)}${`/${d.path}.md`.padEnd(width)}${d.title}`).join('\n');
 }
 
 /** `curl matthewbracke.com`: the listing, the README and what I'm on right now. */
@@ -36,13 +36,19 @@ export function homeText(readme: Doc, site: Site) {
 
 export const dirText = (site: Site, dir: string) => `~/matt/${dir} $ ls\n${lsText(site, dir)}\n`;
 
-/** A short plain-text description for link previews: the first real line of prose. */
+/** Site-relative links and images made absolute, so the markdown still works off the site. */
+export const absolute = (markdown: string, origin: string) => markdown.replace(/\]\(\//g, `](${origin}/`);
+
+/** A short plain-text description for link previews: the first real line of prose, or the first list if it comes first. */
 export function describe(markdown: string) {
-  const line =
-    markdown
-      .split('\n')
-      .map((l) => l.trim())
-      .find((l) => l && !/^(#|[-*|>!]|```)/.test(l)) ?? '';
+  const lines = markdown
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !/^(#|[|>!]|```)/.test(l));
+  const item = (l = '') => l.match(/^[-*]\s+(.+)$/)?.[1];
+  const end = lines.findIndex((l) => !item(l));
+  const list = lines.slice(0, end < 0 ? undefined : end).map((l) => item(l)!);
+  const line = item(lines[0]) ? list.join(' · ') : (lines[0] ?? '');
   const text = line.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '');
   return text.length > 160 ? `${text.slice(0, 160).replace(/\W*\s+\S*$/, '')}…` : text; // cut at a word
 }

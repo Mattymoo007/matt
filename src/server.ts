@@ -10,7 +10,7 @@ import { onChange, watchFolder } from './live.ts';
 import type { Req } from './views/layout.ts';
 import { llmsFull, llmsTxt, robots, rss, sitemap } from './views/machines.ts';
 import { dirPage, fileBody, filePage, homePage, missingPage } from './views/pages.ts';
-import { dirText, docMarkdown, homeText } from './views/text.ts';
+import { absolute, dirText, docMarkdown, homeText } from './views/text.ts';
 
 // Shown until README.md in the folder is published.
 const PLACEHOLDER: Doc = {
@@ -115,12 +115,12 @@ app.get('*', async (c) => {
   const req = request(c);
 
   const doc = site.docs.find((d) => d.path === path) ?? (path === '' ? PLACEHOLDER : undefined);
-  if (doc && path === '') return text ? markdown(c, homeText(doc, site)) : c.html(homePage(doc, site, req));
-  if (doc) return text ? markdown(c, docMarkdown(doc, site)) : c.html(filePage(doc, site, req));
-  if (site.docs.some((d) => d.dir === path))
-    return text ? markdown(c, dirText(site, path)) : c.html(dirPage(path, site, req));
+  const md = (body: string, status: 200 | 404 = 200) => markdown(c, absolute(body, req.origin), status);
+  if (doc && path === '') return text ? md(homeText(doc, site)) : c.html(homePage(doc, site, req));
+  if (doc) return text ? md(docMarkdown(doc, site)) : c.html(filePage(doc, site, req));
+  if (site.docs.some((d) => d.dir === path)) return text ? md(dirText(site, path)) : c.html(dirPage(path, site, req));
   return text
-    ? markdown(c, `cat: ${path}: No such file or directory\n`, 404)
+    ? md(`cat: ${path}: No such file or directory\n\ntry: curl ${req.origin}/llms.txt  (an index of every page)\n`, 404)
     : c.html(missingPage(path, site, req), 404);
 });
 

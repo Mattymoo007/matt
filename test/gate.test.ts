@@ -109,8 +109,14 @@ test('unpublished notes are 404, published ones 200', async () => {
 });
 
 test('links to private notes become plain text; images embed', async () => {
-  assert.match((await get('/README.md', '*/*')).body, /\[Hello world\]\(\/notes\/hello-world\) and Secret plan\./);
-  assert.match((await get('/notes/hello-world.md', '*/*')).body, /!\[photo\]\(\/img\/photo\.jpg\)/);
+  assert.match(
+    (await get('/README.md', '*/*')).body,
+    /\[Hello world\]\(http:\/\/matthewbracke\.com\/notes\/hello-world\) and Secret plan\./,
+  );
+  assert.match(
+    (await get('/notes/hello-world.md', '*/*')).body,
+    /!\[photo\]\(http:\/\/matthewbracke\.com\/img\/photo\.jpg\)/,
+  );
 });
 
 test('images: only shows images from the folder, in a strip under the title', async () => {

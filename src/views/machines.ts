@@ -1,13 +1,11 @@
 // For machines: the same published docs as llms.txt, RSS, a sitemap and JSON-LD. Built per request, like every page.
 import { findImage, imageUrl, resolveLinks, toHtml, type Doc, type Site } from '../content.ts';
 import { inDir, ordered, SECTIONS } from './ls.ts';
-import { describe, docMarkdown } from './text.ts';
+import { absolute, describe, docMarkdown } from './text.ts';
 
 const XML: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' };
 const xml = (s: string) => s.replace(/[&<>"']/g, (c) => XML[c]);
 
-/** Site-relative links and images made absolute, so the markdown still works off the site. */
-const absolute = (markdown: string, origin: string) => markdown.replace(/\]\(\//g, `](${origin}/`);
 const mdUrl = (d: Doc, origin: string) => `${origin}/${d.path || 'README'}.md`;
 const day = (d: Date) => d.toISOString().slice(0, 10);
 
