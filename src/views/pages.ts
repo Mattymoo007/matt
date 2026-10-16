@@ -164,7 +164,7 @@ ${section('notes', notes.slice(0, 3), notes.length)}
 ${section('ideas', ideas.slice(0, 3), ideas.length, 'open · build one with me, or steal it')}
 ${
   now
-    ? html`<h2>for machines</h2><pre class="term"><span class="p">$</span> curl ${req.host}/now
+    ? html`<h2>for machines</h2><pre class="term"><span class="p">$</span> curl ${req.origin}/now
 
 ${docMarkdown(now, site).trim()}
 
